@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    
+    <url>
+     <loc>https://example.com/foo//</loc>
+     <lastmod>2020-11-13</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>https://example.com/foo//ocp_kvm/</loc>
+     <lastmod>2020-11-13</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>https://example.com/foo//powervm/</loc>
+     <lastmod>2020-11-13</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>https://example.com/foo//powervs/</loc>
+     <lastmod>2020-11-13</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+</urlset>
