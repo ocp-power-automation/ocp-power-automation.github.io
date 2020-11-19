@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="./img/favicon.ico">
+  <title>Home - Automation for OpenShift on IBM Power</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="./css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Home";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = "/";
+  </script>
+  
+  <script src="./js/jquery-2.1.1.min.js"></script>
+  <script src="./js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Automation for OpenShift on IBM Power</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href=".">Home</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#deploying-openshift-on-ibm-power-systems">Deploying OpenShift on IBM Power Systems</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#contents">Contents:</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="ocp_kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Automation for OpenShift on IBM Power</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="deploying-openshift-on-ibm-power-systems">Deploying OpenShift on IBM Power Systems</h1>
+<p>This Github organization is home to Infrastructure as Code (IaC) patterns to help deploy OpenShift on IBM Power Systems. Terraform is used to create the infrastructure and ansible playbooks are used to deploy and customer OpenShift. The following diagram shows the high level overview of the IaC pattern:</p>
+<p><img alt="Automation Architecture" src="https://github.com/ktania46/image/blob/main/OCPPowerAutomationArchDiag.png?raw=true" /></p>
+<p>Based on Kubernetes 1.19, OpenShift 4.6 introduced several exciting new capabilities for Power: Extended Update Support (EUS), the first EUS-enabled release in the 4.x stream. Now clients can remain on OCP 4.6 for a longer period of time with enterprise support. Support for compute nodes with up to 512 threads. Clients running scale-up Power Systems nodes (e.g., E980s) can exploit all that compute power, further realizing Power's container density and TCO benefits. Several storage-related enhancements, such as support for 4K sector drives and enablement for additional storage options such as HostPath, iSCSI and local-storage-operator. While this is just a few of the exciting new features in OCP 4.6, it demonstrates how OpenShift continues driving innovation as the leading hybrid cloud platform.</p>
+<h2 id="contents">Contents:</h2>
+<ul>
+<li><a href="powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a><ul>
+<li>Introduction </li>
+<li>Automation Host Prerequisites </li>
+<li>PowerVS Prerequisites </li>
+<li>OCP Install </br>
+&nbsp;</li>
+</ul>
+</li>
+<li><a href="ocp_kvm/">Deploying OpenShift on KVM</a><ul>
+<li>Introduction </li>
+<li>Prerequisites</li>
+<li>Image and VM Requirements </li>
+<li>OCP Install </br>
+&nbsp;</li>
+</ul>
+</li>
+<li><a href="powervm/">Deploying OpenShift on PowerVM managed via PowerVC </a><ul>
+<li>Introduction </li>
+<li>Prerequisites </li>
+<li>Image and LPAR Requirements </li>
+<li>OCP Install </br>
+&nbsp;</li>
+</ul>
+</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="ocp_kvm/" class="btn btn-neutral float-right" title="Ocp kvm">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+        <span style="margin-left: 15px"><a href="ocp_kvm/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="./js/theme.js"></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 0.16.3
+Build Date UTC : 2020-11-13 06:08:24
+-->
