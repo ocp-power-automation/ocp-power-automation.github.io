@@ -3,8 +3,8 @@ site_name: Automation for OpenShift on IBM Power
 
 nav:
     - Home: 'index.md'
-    - Deploying OpenShift on IBM Cloud Power Virtual Servers: 'powervs.md'
-    - Deploying OpenShift on KVM: 'ocp_kvm.md'
-    - Deploying OpenShift on PowerVM managed via PowerVC: 'powervm.md'
+    - Deploying OpenShift on IBM Cloud Power Virtual Servers: ocp4-upi-powervs/README.md
+    - Deploying OpenShift on PowerVM managed via PowerVC: ocp4-upi-powervm/README.md
+    - Deploying OpenShift on KVM: ocp4-upi-kvm/README.md
 
 theme: readthedocs
