@@ -1,0 +1,9 @@
+[submodule "docs/ocp4-upi-powervs"]
+	path = docs/ocp4-upi-powervs
+	url = git@github.com:ocp-power-automation/ocp4-upi-powervs.git
+[submodule "docs/ocp4-upi-powervm"]
+	path = docs/ocp4-upi-powervm
+	url = git@github.com:ocp-power-automation/ocp4-upi-powervm.git
+[submodule "docs/ocp4-upi-kvm"]
+	path = docs/ocp4-upi-kvm
+	url = git@github.com:ocp-power-automation/ocp4-upi-kvm.git
