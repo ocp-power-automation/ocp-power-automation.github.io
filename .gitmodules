@@ -7,3 +7,6 @@
 [submodule "docs/ocp4-upi-kvm"]
 	path = docs/ocp4-upi-kvm
 	url = git@github.com:ocp-power-automation/ocp4-upi-kvm.git
+[submodule "docs/openshift-install-power"]
+	path = docs/openshift-install-power
+	url = git@github.com:ocp-power-automation/openshift-install-power.git
