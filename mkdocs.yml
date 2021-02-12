@@ -6,6 +6,7 @@ nav:
     - Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script: openshift-install-power/README.md
     - Deploying OpenShift on PowerVM managed via PowerVC: ocp4-upi-powervm/README.md
     - Deploying OpenShift on KVM: ocp4-upi-kvm/README.md
+    - FAQ for OpenShift on IBM Cloud Power Virtual Servers: ocp-powervm-faq/docs/powervs-faq.md
 
 theme:
     name: readthedocs
