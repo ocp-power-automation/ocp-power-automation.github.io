@@ -10,3 +10,7 @@
 [submodule "docs/openshift-install-power"]
 	path = docs/openshift-install-power
 	url = git@github.com:ocp-power-automation/openshift-install-power.git
+[submodule "docs/ocp-powervm-faq"]
+	path = docs/ocp-powervm-faq
+	url = git@github.com:ocp-power-automation/ocp-powervm-faq.git
+	branch = master
