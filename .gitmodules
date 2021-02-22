@@ -1,15 +1,19 @@
 [submodule "docs/ocp4-upi-powervs"]
 	path = docs/ocp4-upi-powervs
 	url = git@github.com:ocp-power-automation/ocp4-upi-powervs.git
+	branch = master
 [submodule "docs/ocp4-upi-powervm"]
 	path = docs/ocp4-upi-powervm
 	url = git@github.com:ocp-power-automation/ocp4-upi-powervm.git
+	branch = master
 [submodule "docs/ocp4-upi-kvm"]
 	path = docs/ocp4-upi-kvm
 	url = git@github.com:ocp-power-automation/ocp4-upi-kvm.git
+	branch = master
 [submodule "docs/openshift-install-power"]
 	path = docs/openshift-install-power
 	url = git@github.com:ocp-power-automation/openshift-install-power.git
+	branch = master
 [submodule "docs/ocp-powervm-faq"]
 	path = docs/ocp-powervm-faq
 	url = git@github.com:ocp-power-automation/ocp-powervm-faq.git
