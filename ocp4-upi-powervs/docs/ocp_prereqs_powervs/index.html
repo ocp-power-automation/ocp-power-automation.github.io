@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>**PowerVS Prerequisites** - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "**PowerVS Prerequisites**";
+    var mkdocs_page_input_path = "ocp4-upi-powervs/docs/ocp_prereqs_powervs.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>**PowerVS Prerequisites**</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="powervs-prerequisites"><strong>PowerVS Prerequisites</strong></h1>
+<hr />
+<h2 id="create-an-ibm-cloud-account">Create an IBM Cloud account.</h2>
+<p>If you don’t already have one, you need a paid IBM Cloud account to create your Power Systems Virtual Server instance.
+To create an account, go to: <a href="https://cloud.ibm.com">cloud.ibm.com</a>.</p>
+<h2 id="create-an-ibm-cloud-account-api-key">Create an IBM Cloud account API key</h2>
+<p>Please refer to the following <a href="https://cloud.ibm.com/docs/account?topic=account-userapikey">documentation</a> to create an API key.</p>
+<h2 id="create-power-systems-virtual-server-service-instance">Create Power Systems Virtual Server Service Instance</h2>
+<p>After you have an active IBM Cloud account, you can create a Power Systems Virtual Server service. To do so, perform the following steps:</p>
+<ol>
+<li>Log in to the IBM Cloud <a href="https://cloud.ibm.com/">dashboard</a> and search for <strong>Power</strong> in the catalog.
+&nbsp;
+<img alt="Search for Power" src="../media/image1.png" />
+&nbsp;</li>
+<li>Select <strong>Power Systems Virtual Server</strong>
+&nbsp;
+<img alt="Select Power Systems Virtual Server" src="../media/image2.png" />
+&nbsp;</li>
+<li>Fill required details
+&nbsp;
+<img alt="Fill Details" src="../media/image3.png" />
+&nbsp;
+Provide a meaningful name for your instance in the <strong>Service name</strong> field and select the proper <strong>resource group</strong>.
+More details on resource groups is available from the following <a href="https://cloud.ibm.com/docs/account?topic=account-rgs">link</a>
+&nbsp;
+<img alt="Provide service name" src="../media/image4.png" />
+&nbsp;</li>
+<li>Create Service
+Click on "<strong>Create</strong>" to create the service instance.
+&nbsp;
+<img alt="Create service" src="../media/image5.png" />
+&nbsp;</li>
+</ol>
+<h2 id="create-private-network">Create Private Network</h2>
+<p>A private network is required for your OpenShift cluster. Perform the following steps to create a private network for the Power Systems Virtual Server service instance created in the previous step.</p>
+<ol>
+<li>Select the previously created "<strong>Service Instance</strong>" and create a private subnet by clicking "<strong>Subnets</strong>" and providing the required inputs.
+&nbsp;
+<strong>Note:</strong> If you see a screen displaying CRN and GUID, then click "View full details" to access the "Subnet" creation page.
+&nbsp;
+<img alt="Select subnet" src="../media/image6.png" />
+&nbsp;</li>
+<li>Provide the network details and click <strong>"Create subnet"</strong>
+&nbsp;
+<img alt="Provide Input" src="../media/image7.png" />
+&nbsp;
+On successful network creation, the following output will be displayed in the dashboard.
+&nbsp;
+<img alt="Create subnet" src="../media/image8.png" /></li>
+</ol>
+<h3 id="enable-communication-over-the-private-network">Enable communication over the private network</h3>
+<p>Two options are available to enable communication over the private network.</p>
+<p><em>Option 1</em></p>
+<p>You can use the IBM Cloud CLI with the latest power-iaas plug-in (version 0.3.4 or later) to enable a private network communication.
+Refer: https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-managing-cloud-connections</p>
+<p>This requires attaching the private network to an IBM Cloud Direct Link Connect 2.0 connection.
+Perform the following steps to enable private network communication by attaching to the Direct Link Connect 2.0 connection.</p>
+<ul>
+<li>Select a specific service instance
+You’ll need the CRN of the service instance created earlier (for example, ocp-powervs-test-1).</li>
+</ul>
+<pre><code>ibmcloud pi service-target crn:v1:bluemix:public:power-iaas:tok04:a/65b64c1f1c29460e8c2e4bbfbd893c2c:e4bb3d9d-a37c-4b1f-a923-4537c0c8beb3::
+</code></pre>
+<ul>
+<li>Get the ID of the private network</li>
+</ul>
+<pre><code>ibmcloud pi nets | grep -w ocp-net
+
+
+ID           93cc386a-53c5-4aef-9882-4294025c5e1f
+Name         ocp-net
+Type         vlan
+VLAN         413
+CIDR Block   192.168.201.0/24
+IP Range     [192.168.201.2  192.168.201.254]
+Gateway      192.168.201.1
+DNS          127.0.0.1
+
+</code></pre>
+<p>You’ll need the ID in subsequent steps.</p>
+<ul>
+<li>Get the Direct Link Connect connection ID</li>
+</ul>
+<pre><code>ibmcloud pi cons
+
+ID                                     Name             Link Status   Speed
+89fcfd7c-ec74-473b-ba09-4cd95fa47e2e   ocp-powervs-dl   idle          10000
+
+</code></pre>
+<p>Get the ID of the connection.</p>
+<p>If you don’t have an existing Direct Link Connect 2.0 connection provisioned under your account, 
+then you can create a new connection using the IBM Cloud CLI. 
+A highly available Direct Link Connect 2.0 connection between the Power Virtual Server and IBM Cloud comes free of cost. 
+Refer: https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-ordering-direct-link-connect</p>
+<pre><code>ibmcloud pi conc ocp-powervs-dl --speed 10000
+</code></pre>
+<ul>
+<li>Attach the private network to Direct Link Connect 2.0 (connection)</li>
+</ul>
+<pre><code>ibmcloud pi conan 89fcfd7c-ec74-473b-ba09-4cd95fa47e2e --network e1b90247-a504-4468-8662-8f785533067d
+</code></pre>
+<p>This can take 3 to 5 minutes to become active.</p>
+<ul>
+<li>Verify the status of the attachment</li>
+</ul>
+<pre><code>ibmcloud pi con 89fcfd7c-ec74-473b-ba09-4cd95fa47e2e
+
+ID               89fcfd7c-ec74-473b-ba09-4cd95fa47e2e
+Name             ocp-powervs-dl
+Link Status      idle
+Speed            10000
+Creation Date    2021-05-13T13:17:08.093Z
+Global Routing   false
+IBM IPAddress    169.254.0.1/30
+User IPAddress   169.254.0.2/30
+Metered          false
+Classic          false
+Networks         ID: e1b90247-a504-4468-8662-8f785533067d       Name: ocp-net  VlanID: 392
+
+</code></pre>
+<p>The output shows that the <code>ocp-net</code> private network is attached to Direct Link Connect 2.0. 
+This enables inter VM communication on the private network as well as communication with IBM Cloud over Direct Link.</p>
+<p><em>Option 2</em></p>
+<p>If you don’t want to use Direct Link, then you’ll need to raise a service request to enable private network communication.</p>
+<p>Perform the following steps to raise the service request.</p>
+<p>Click on <strong>Support</strong> in the top bar of the dashboard and scroll down to <strong>Contact Support</strong>, then select "<strong>Create a case</strong>"
+&nbsp;
+<img alt="Create a case" src="../media/image9.png" />
+&nbsp;
+Select "<strong>Power Systems Virtual Server</strong>" tile
+&nbsp;
+<img alt="Create a case Page" src="../media/image10.png" />
+&nbsp;
+Complete the details as shown using the following template:
+&nbsp;
+- [Subject:] Enable communication between PowerVS instances on private network
+- [Body:]
+  <code>Please enable IP communication between PowerVS instances for the following private network:
+    Name: &lt;your-subnet-name-from-above&gt;
+    Type: Private
+    CIDR: &lt;your ip subnet-from-above&gt;
+    VLAN ID: &lt;your-vlan-id&gt; (listed in your subnet details post-creation)
+    Location: &lt;your-location&gt; (listed in your subnet details post-creation)
+    Service Instance: &lt;your-service-name&gt;</code>
+&nbsp;
+Following is a complete example of the support case content.</p>
+<pre><code>  Please enable IP communication between PowerVS instances for the following private network:
+  Name: ocp-net
+  Type: Private
+  CIDR: 192.168.25.0/24
+  VLAN ID: 293
+  Location: eu-de-2
+  Service Instance: ocp-powervs-frankfurt-2
+</code></pre>
+<p>&nbsp;
+<img alt="Sample support request " src="../media/image11.png" />
+&nbsp;
+Click "<strong>Continue</strong>" to accept agreements, and then Click "<strong>Submit case</strong>".
+&nbsp;
+<img alt="Submit Case" src="../media/image12.png" />
+&nbsp;</p>
+<p>This usually takes a day to get enabled.</p>
+<h2 id="rhcos-and-rhelcentos-8x-images-for-openshift">RHCOS and RHEL/CentOS 8.X Images for OpenShift</h2>
+<p>RHEL image is used for bastion and RHCOS is used for the OpenShift cluster nodes.</p>
+<p>You'll need to create <a href="https://en.wikipedia.org/wiki/Open_Virtualization_Format">OVA</a> formatted images for RHEL and RHCOS, upload them to IBM Cloud Object storage and then import these images as boot images in your PowerVS service instance.</p>
+<p>Further, the image disk should be minimum of 120 GB in size.</p>
+<h3 id="creating-ova-images">Creating OVA images</h3>
+<ul>
+<li>If you have PowerVC then you can follow the instructions provided in the <a href="https://www.ibm.com/support/knowledgecenter/en/SSXK2N_1.4.4/com.ibm.powervc.standard.help.doc/powervc_export_image_hmc.html">link</a> to export an existing PowerVC image to OVA image.</li>
+<li>You can also use the following <a href="https://github.com/ppc64le-cloud/pvsadm">tool</a> to convert Qcow2 image to OVA.</li>
+<li>Qcow2 Image Links</li>
+<li>RHEL 8.3 Qcow2 image is available from the following <a href="https://access.redhat.com/downloads/content/279/ver=/rhel---8/8.3/ppc64le/product-software">link</a></li>
+<li>CentOS 8.3 Wcow2 image is available from the following <a href="https://cloud.centos.org/centos/8/ppc64le/images/CentOS-8-GenericCloud-8.3.2011-20201204.2.ppc64le.qcow2">link</a></li>
+<li>RHCOS Qcow2 image is available from the following <a href="https://mirror.openshift.com/pub/openshift-v4/ppc64le/dependencies/rhcos/4.6/latest/rhcos-4.6.1-ppc64le-openstack.ppc64le.qcow2.gz">link</a></li>
+</ul>
+<p>Note: RHCOS image version is tied to the specific OCP release. For example RHCOS-4.6 image needs to be used for OCP 4.6 release.</p>
+<h3 id="uploading-to-ibm-cloud-object-storage">Uploading to IBM Cloud Object Storage</h3>
+<ul>
+<li><strong>Create IBM Cloud Object Storage service and bucket</strong>
+Please refer to the following <a href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-getting-started-cloud-object-storage">link</a> for instructions to create IBM Cloud Object Storage service and required storage bucket to upload the OVA images.
+&nbsp;</li>
+<li><strong>Create secret and access keys with Hash-based Message Authentication Code (HMAC)</strong>
+Please refer to the following <a href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-uhc-hmac-credentials-main">link</a> for instructions to create the keys required for importing the images into your PowerVS service instance.
+&nbsp;</li>
+<li><strong>Upload the OVA image to Cloud Object storage bucket</strong>
+Please refer to the following <a href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-upload">link</a> for uploading the OVA image to the respective bucket. Alternatively you can also use the following <a href="https://github.com/ppc64le-cloud/pvsadm">tool</a>.</li>
+</ul>
+<h3 id="importing-the-images-in-powervs">Importing the images in PowerVS</h3>
+<p>Choose the previously created PowerVS <strong>"Service Instance"</strong>, click <strong>"View full details"</strong> and select <strong>"Boot images"</strong>.
+Click the <strong>"Import image"</strong> option and fill the requisite details like image name, storage type and cloud object storage details.</p>
+<p>Example screenshot showing import of RHEL image that is used for bastion
+&nbsp;
+<img alt="Image Import-RHEL" src="../media/image-import1.png" />
+&nbsp;
+Example screenshot showing import of RHCOS image used for OCP
+&nbsp;
+<img alt="Image Import-RHCOS" src="../media/image-import2.png" />
+&nbsp;</p>
+<p>Your PowerVS service instance is now ready for OpenShift clusters.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

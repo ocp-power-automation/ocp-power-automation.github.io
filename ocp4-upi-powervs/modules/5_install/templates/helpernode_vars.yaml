@@ -1,0 +1,87 @@
+---
+disk: vda
+helper:
+  name: "${bastion_name}"
+  ipaddr: "${bastion_ip}"
+%{ if isHA }
+high_availability:
+  helpernodes:
+    - name: "${name_prefix}bastion-0"
+      ipaddr: "${bastion_master_ip}"
+      state: MASTER
+      priority: 100
+%{ for idx,b in bastion_backup_ip ~}
+    - name: "${name_prefix}bastion-${idx + 1}"
+      ipaddr: "${b}"
+      state: BACKUP
+      priority: 90
+%{ endfor ~}
+%{ endif }
+dns:
+  domain: "${cluster_domain}"
+  clusterid: "${cluster_id}"
+  forwarder1: "${forwarders}"
+dhcp:
+  router: "${gateway_ip}"
+  bcast: "${broadcast}"
+  netmask: "${netmask}"
+  ipid: "${ipid}"
+  netmaskid: "${netmask}"
+  poolstart: "${pool.start}"
+  poolend: "${pool.end}"
+%{ if bootstrap_info.ip != "" && bootstrap_info.mac != "" }
+bootstrap:
+  name: "${bootstrap_info.name}"
+  ipaddr: "${bootstrap_info.ip}"
+  macaddr: "${bootstrap_info.mac}"
+%{ endif }
+masters:
+%{ for m in master_info ~}
+  - name: "${m.name}"
+    ipaddr: "${m.ip}"
+    macaddr: "${m.mac}"
+%{ endfor ~}
+%{ if length(worker_info) > 0 }
+workers:
+%{ for w in worker_info ~}
+  - name: "${w.name}"
+    ipaddr: "${w.ip}"
+    macaddr: "${w.mac}"
+%{ endfor ~}
+%{ endif }
+ppc64le: true
+ssh_gen_key: false
+
+%{ if local_registry.enable_local_registry }
+setup_registry:
+  deploy: true
+  autosync_registry: true
+  registry_image: "${local_registry.registry_image}"
+  local_repo: "${local_registry.ocp_release_repo}"
+  product_repo: "openshift-release-dev"
+  release_name: "${local_registry.ocp_release_name}"
+  release_tag: "${local_registry.ocp_release_tag}"
+%{ endif }
+
+%{ if chrony_config ~}
+chronyconfig:
+  enabled: true
+  content:
+%{ for item in chrony_config_servers ~}
+    - server: ${item.server}
+      options: ${item.options}
+%{ endfor ~}
+    - server: "${bastion_ip}"
+      options: iburst
+%{ endif ~}
+
+ocp_client: "${client_tarball}"
+ocp_installer: "${install_tarball}"
+
+# Pointing it to local files since it is not required atm
+ocp_bios: "file:///dev/null"
+ocp_initramfs: "file:///dev/null"
+ocp_install_kernel: "file:///dev/null"
+
+# This is required for latest helpernode. TODO: Remove when https://github.com/RedHatOfficial/ocp4-helpernode/pull/140 is merged
+helm_source: "https://get.helm.sh/helm-v3.3.4-linux-ppc64le.tar.gz"

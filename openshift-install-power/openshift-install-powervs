@@ -1,0 +1,1703 @@
+#!/usr/bin/env bash
+: '
+Copyright (C) 2020 IBM Corporation
+Licensed under the Apache License, Version 2.0 (the “License”);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an “AS IS” BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+'
+#-------------------------------------------------------------------------
+set -e
+VERSION="v1.8.0"
+
+#-------------------------------------------------------------------------
+# Display help
+#-------------------------------------------------------------------------
+function help {
+  cat <<-EOF
+
+Automation for deploying OpenShift 4.X on PowerVS
+
+Usage:
+  openshift-install-powervs [command] [<args> [<value>]]
+
+Available commands:
+  setup           Install all the required packages/binaries in current directory
+  variables       Interactive way to populate the variables file
+  create          Create an OpenShift cluster
+  destroy         Destroy an OpenShift cluster
+  output          Display the cluster information. Runs terraform output [NAME]
+  access-info     Display the access information of installed OpenShift cluster
+  help            Display this information
+
+Where <args>:
+  -var               Terraform variable to be passed to the create/destroy command
+  -var-file          Terraform variable file name in current directory. (By default using var.tfvars)
+  -flavor            Cluster compute template to use eg: small, medium, large
+  -force-destroy     Not ask for confirmation during destroy command
+  -ignore-os-checks  Ignore operating system related checks
+  -ignore-warnings   Warning messages will not be displayed. Should be specified first, before any other args.
+  -verbose           Enable verbose for terraform console messages
+  -all-images        List all the images available during variables prompt
+  -trace             Enable tracing of all executed commands
+  -version, -v       Display the script version
+
+Environment Variables:
+  IBMCLOUD_API_KEY    IBM Cloud API key
+  RELEASE_VER         OpenShift release version (Default: 4.12)
+  ARTIFACTS_VERSION   Tag or Branch name of ocp4-upi-powervs repository (Default: main)
+  RHEL_SUBS_PASSWORD  RHEL subscription password if not provided in variables
+  NO_OF_RETRY         Number of retries/attempts to run repeatable actions such as create (Default: 5)
+
+Submit issues at: https://github.com/ocp-power-automation/openshift-install-power/issues
+
+EOF
+  exit 0
+}
+
+RELEASE_VER=${RELEASE_VER:-"4.12"}
+ARTIFACTS_REPO=${ARTIFACTS_REPO:-"https://github.com/ocp-power-automation/ocp4-upi-powervs"}
+ARTIFACTS_VERSION=${ARTIFACTS_VERSION:-"main"}
+#ARTIFACTS_VERSION=${ARTIFACTS_VERSION:-"release-$RELEASE_VER"}
+#ARTIFACTS_VERSION="v4.5.3"
+
+INSTALL_DIR=$PWD
+
+TF="$INSTALL_DIR/terraform"
+CLI_PATH="$INSTALL_DIR/ibmcloud"
+OC_PATH="$INSTALL_DIR/oc"
+
+ARTIFACTS_DIR="automation"
+LOGFILE="ocp4-upi-powervs_$(date "+%Y%m%d%H%M%S")"
+TRACE=0
+TF_TRACE=0
+FORCE_DESTROY=0
+IGNORE_OS=0
+IGNORE_WARN=0
+DISPLAY_ALL_IMAGES=0
+IS_HA=0
+
+NO_OF_RETRY=${NO_OF_RETRY:-"5"}
+SLEEP_TIME=10
+REBOOT_TIMEOUT=15
+REBOOT_TIMEOUT_BASTION=30
+
+BOOTSTRAP_DELETE_VARFILE="bootstrap-delete.tfvars"
+
+OLD_IFS=$IFS
+
+# All the ibmcloud configs and targeted power-iaas CRN will be stored under current directory named '.bluemix'
+export IBMCLOUD_HOME="$PWD"
+
+#-------------------------------------------------------------------------
+# Trap ctrl-c interrupt and call ctrl_c()
+#-------------------------------------------------------------------------
+trap ctrl_c INT
+function ctrl_c() {
+  if [[ -f ./.terraform.tfstate.lock.info || -f ./"$ARTIFACTS_DIR"/.terraform.tfstate.lock.info ]]; then
+    error "Terraform process was running when the script was interrupted. Please run create command again to continue OR destroy command to clean up resources."
+  else
+    error "Exiting on user interrupt!"
+  fi
+}
+
+#-- Colors escape seqs
+YEL='\033[1;33m'
+CYN='\033[0;36m'
+GRN='\033[1;32m'
+RED='\033[1;31m'
+PUR="\033[1;35m"
+LGRN="\033[0;32m"
+NRM='\033[0m'
+
+function log {
+  echo -e "${CYN}[${FUNCNAME[1]}]${NRM} $1"
+}
+function warn {
+  if [[ $IGNORE_WARN -eq 0 ]]; then
+    echo -e "${YEL}[${FUNCNAME[1]}]${NRM} ${YEL}WARN${NRM}: $1"
+  fi
+}
+function failure {
+  echo -e "${PUR}[${FUNCNAME[1]}]${NRM} ${PUR}FAILED${NRM}: $1"
+}
+function success {
+  echo -e "${GRN}[${FUNCNAME[1]}]${NRM} ${GRN}SUCCESS${NRM}: $1"
+}
+function highlight {
+  echo -e "${LGRN}$1${NRM}"
+}
+function error {
+  echo -e "${RED}[${FUNCNAME[1]}]${NRM} ${RED}ERROR${NRM}: $1"
+  ret_code=$2
+  [[ "$ret_code" == "" ]] && ret_code=1
+  IFS=$OLD_IFS
+  exit $ret_code
+}
+function debug_switch {
+  if [[ $TRACE == 0 ]]; then
+    return 0
+  fi
+
+  if [[ $- =~ x ]]; then
+    set +x
+  else
+    set -x
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Display the cluster output variables
+#-------------------------------------------------------------------------
+function output {
+  cd ./"$ARTIFACTS_DIR"
+  $TF output "$output_var"
+}
+
+#-------------------------------------------------------------------------
+# Util for retrying any command, special case for curl downloads
+#-------------------------------------------------------------------------
+function retry {
+  cmd=$1
+  for i in $(seq 1 "$NO_OF_RETRY"); do
+    echo "Attempt: $i/$NO_OF_RETRY"
+    ret_code=0
+    $cmd || ret_code=$?
+    if [ $ret_code = 0 ]; then
+      break
+    elif [ "$i" == "$NO_OF_RETRY" ]; then
+      error "All retry attempts failed! Please try running the script again after some time" $ret_code
+    else
+      sleep 1s
+    fi
+  done
+}
+
+#-------------------------------------------------------------------------
+# Progress bar
+#-------------------------------------------------------------------------
+function show_progress {
+  if [[ "$TF_TRACE" -eq 1 ]]; then
+    return 0
+  fi
+  str="-"
+  for ((n=0;n<PERCENT;n+=2)); do str="${str}#"; done
+  for ((n=PERCENT;n<=100;n+=2)); do str="${str} "; done
+  echo -ne "$str($PERCENT%)\r"
+}
+
+#-------------------------------------------------------------------------
+# Check if ping to an IP is working
+#-------------------------------------------------------------------------
+function check_ping {
+  [[ -z $1 ]] && return 1
+  $BASTION_SSH_CMD ping -w 2 -c 1 "$1" &>/dev/null
+}
+
+#-------------------------------------------------------------------------
+# Check if resource state exist
+#-------------------------------------------------------------------------
+function checkState {
+  if ! $TF state list 2>/dev/null | grep -F "$1" >/dev/null 2>&1 || $TF state show "$1" 2>/dev/null | grep "(tainted)" >/dev/null; then
+    return 1;
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Check if resource state exist
+#-------------------------------------------------------------------------
+function checkOutput {
+  $TF output | grep -F "$1" >/dev/null 2>&1
+}
+
+#-------------------------------------------------------------------------
+# Start or stop a node
+# instance_action: $1: start/stop (default: stop)
+# node_type: $2: bootstrap/master/worker (optional, will include all when empty)
+#-------------------------------------------------------------------------
+function take_action_node {
+  instance_action=$1
+  node_type=$2
+  [[ -z $instance_action ]] && instance_action=stop
+
+  # can 'stop' only if current status is ACTIVE; can 'start' only if current status is SHUTOFF
+  if [[ $instance_action == "stop" ]]; then
+    ALLOWED_STATUS="ACTIVE"
+  elif [[ $instance_action == "start" ]]; then
+    ALLOWED_STATUS="SHUTOFF"
+  else
+    warn "only supported actions are start and stop, default is stop"
+    return 0
+  fi
+  for node in $($TF state list 2>/dev/null | grep "module.nodes.ibm_pi_instance" | grep "$node_type"); do
+    instance_name=$($TF state show "$node" | grep pi_instance_name | awk '{print $3}' | sed 's/"//g')
+    instance_id=$($CLI_PATH pi instances 2>/dev/null | grep "$instance_name" | awk '{print $1}')
+    [[ -z $instance_id ]] && continue
+    status=$($CLI_PATH pi in "$instance_id" 2>/dev/null| grep '^Status' | awk '{print $2}')
+    if [[ $status == "$ALLOWED_STATUS" ]]; then
+      $CLI_PATH pi instance-$instance_action "$instance_id"
+    fi
+  done
+}
+
+#-------------------------------------------------------------------------
+# Check if cluster nodes resources are created
+#-------------------------------------------------------------------------
+function checkAllNodes {
+  no_of_nodes=$($TF state list 2>/dev/null | grep -c "module.nodes.ibm_pi_instance")
+  if [[ $no_of_nodes -eq 0 ]]; then
+    return 1
+  fi
+
+  if [[ $no_of_nodes -eq $TOTAL_RHCOS ]]; then
+    PERCENT=65
+  else
+    current_percent=$(( 50  * no_of_nodes / TOTAL_RHCOS))
+    PERCENT=$(( 14 + current_percent ))
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Reboot node if ELAPSED_TIME is greater than REBOOT_TIMEOUT
+#-------------------------------------------------------------------------
+function reboot_node {
+  NODE=$1
+  if [[ -z $ELAPSED_TIME ]]; then
+    ELAPSED_TIME=$SECONDS
+  elif [[ $((SECONDS - ELAPSED_TIME)) -gt $((REBOOT_TIMEOUT * 60)) ]]; then
+    warn "Unable to connect to $NODE. Rebooting the node"
+    instance_id=$($CLI_PATH pi instances | grep "$NODE" | awk '{print $1}')
+    $CLI_PATH pi instance-hard-reboot "$instance_id"
+    ELAPSED_TIME=$SECONDS
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Check if the infra setup is working
+#-------------------------------------------------------------------------
+function checkClusterSetup {
+
+  if [[ -f $BOOTSTRAP_DELETE_VARFILE ]]; then
+    # No need to check setup if bootstrap node does not exist
+    PERCENT=82
+    return
+  fi
+
+  # Check if every node has an IP
+  if ! checkOutput "bastion_ssh_command" || ! checkOutput "bootstrap_ip" || ! checkOutput "master_ips" || ! checkOutput "worker_ips"; then
+    return 1
+  fi
+
+
+
+  if [[ $PERCENT -lt 71 ]]; then
+    BASTION_SSH_CMD="$($TF output -raw bastion_ssh_command | sed 's/,.*//') -q -o StrictHostKeyChecking=no"
+    # Check if ign file is available for download
+    ign_url="http://${NAME_PREFIX}bastion-0:8080/ignition/bootstrap.ign"
+    if $BASTION_SSH_CMD curl -o /dev/null -sIw '%{http_code}' "$ign_url" | grep -q 200; then
+      PERCENT=71
+    else
+      return 1
+    fi
+  fi
+
+  # Check bootstrap connection
+  if [[ $PERCENT -lt 72 ]]; then
+    if grep -E "ok: \[.*bootstrap\] => {\"changed\"" "$LOG_FILE" > /dev/null; then
+      PERCENT=72
+      unset ELAPSED_TIME
+    else
+      reboot_node "${NAME_PREFIX}bootstrap"
+      return 0
+    fi
+  fi
+
+  # Check masters connection
+  for ((i=0;i<MASTER_COUNT;i++)); do
+    if [[ $PERCENT -lt $((73 + i)) ]]; then
+      if grep -E "ok: \[.*master-$i\] => {\"changed\"" "$LOG_FILE" > /dev/null; then
+        # once a node is connected subsequent nodes should be faster to connect
+        REBOOT_TIMEOUT=1
+        unset ELAPSED_TIME
+        PERCENT=$((73 + i))
+      else
+        if reboot_node "${NAME_PREFIX}master-$i"; then
+          REBOOT_TIMEOUT=5
+        fi
+        return 0
+      fi
+    fi
+  done
+
+
+  # Check wait-for-bootstrap completion
+  # Implies that wait-for-bootstrap is complete when compute node check has started
+  if grep -F "PLAY [Check and configure compute nodes]" "$LOG_FILE" >/dev/null; then
+    if [[ $PERCENT -lt 82 ]]; then
+      PERCENT=82
+    fi
+  else
+    # all masters are up; reset time for checking workers
+    unset ELAPSED_TIME
+    REBOOT_TIMEOUT=5
+    return 0
+  fi
+
+  # Check workers connection
+  for ((i=0;i<WORKER_COUNT;i++)); do
+    if [[ $PERCENT -lt $((83 + i)) ]]; then
+      if grep -E "ok: \[.*worker-$i\] => {\"changed\"" "$LOG_FILE" > /dev/null; then
+        PERCENT=$((83 + i))
+        REBOOT_TIMEOUT=1
+        unset ELAPSED_TIME
+      else
+        if reboot_node "${NAME_PREFIX}worker-$i"; then
+          REBOOT_TIMEOUT=5
+        fi
+        return 0
+      fi
+    fi
+  done
+  # TODO: Check wait-for-complete
+}
+
+#-------------------------------------------------------------------------
+# Check and reboot bastion nodes if ELAPSED_TIME is greater than REBOOT_TIMEOUT_BASTION
+#-------------------------------------------------------------------------
+function check_bastion {
+  bothReady=true
+  for ((i=0;i<BASTION_COUNT;i++)); do
+    if checkState "module.prepare.ibm_pi_instance.bastion[${i}]"; then
+      continue
+    else
+      bothReady=false
+    fi
+    instance_name="${NAME_PREFIX}bastion-$i"
+    instance_id=$($CLI_PATH pi instances 2>/dev/null | grep "$instance_name" | awk '{print $1}')
+    instance_health_status=$($CLI_PATH pi instance "$instance_id" 2>/dev/null | grep "^Health Status" | awk '{print $3}')
+    if [[ $instance_health_status == "WARNING" ]]; then
+      if [[ -z ${BASTION_ELAPSED_TIME[$i]} ]]; then
+        BASTION_ELAPSED_TIME[$i]=$SECONDS
+        PERCENT=$((PERCENT + 2))
+      elif [[ $((SECONDS - BASTION_ELAPSED_TIME[i])) -gt $((REBOOT_TIMEOUT_BASTION * 60)) ]]; then
+        warn "Node $instance_name is in WARNING state for more than $REBOOT_TIMEOUT_BASTION mins. Rebooting the node"
+        $CLI_PATH pi instance-hard-reboot "$instance_id"
+        BASTION_ELAPSED_TIME[$i]=$SECONDS
+      fi
+    fi
+  done
+  if [[ $bothReady == true ]]; then
+    PERCENT=11
+  elif [[ $PERCENT -le 3 ]]; then
+    return 1
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Evaluate the progress
+#-------------------------------------------------------------------------
+function monitor {
+  if checkOutput "name_prefix"; then
+    NAME_PREFIX=$($TF output -raw "name_prefix" 2>/dev/null)
+  else
+    PERCENT=0
+    return 0
+  fi
+
+  if grep -F "module.install.null_resource.install: Creation complete after" "$LOG_FILE" >/dev/null; then
+    PERCENT=99
+  elif checkClusterSetup; then
+    return 0
+  elif checkState "module.install.null_resource.config"; then
+    PERCENT=70
+  elif checkAllNodes; then
+    return 0
+  elif checkState "module.prepare.null_resource.bastion_packages[0]"; then
+    PERCENT=14
+  elif checkState "module.prepare.null_resource.bastion_init[0]"; then
+    PERCENT=12
+  elif check_bastion; then
+    return 0
+  elif checkState "module.prepare.ibm_pi_network.public_network"; then
+    PERCENT=3
+  elif checkState "module.prepare.ibm_pi_key.key"; then
+    PERCENT=2
+  else
+    PERCENT=1
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Monitor loop for the progress of apply command
+#-------------------------------------------------------------------------
+function monitor_loop {
+  # Wait if log file is updated in last 1m
+  while [[ $(find "${LOG_FILE}" -mmin -1 -print) ]]; do
+    if [[ $action == "apply" ]]; then
+      monitor
+      show_progress
+    fi
+    sleep $SLEEP_TIME
+  done
+}
+
+#-------------------------------------------------------------------------
+# Read the info from the plan file
+#-------------------------------------------------------------------------
+function plan_info {
+  BASTION_COUNT=$(grep ibm_pi_instance.bastion tfplan | grep -c -v "has changed")
+  BOOTSTRAP_COUNT=$(grep ibm_pi_instance.bootstrap tfplan | grep -c -v "has changed")
+  MASTER_COUNT=$(grep ibm_pi_instance.master tfplan | grep -c -v "has changed")
+  WORKER_COUNT=$(grep ibm_pi_instance.worker tfplan | grep -c -v "has changed")
+  TOTAL_RHCOS=$(( BOOTSTRAP_COUNT + MASTER_COUNT + WORKER_COUNT ))
+}
+
+#-------------------------------------------------------------------------
+# # Check if terraform is already running
+#-------------------------------------------------------------------------
+function is_terraform_running {
+  LOG_FILE=$(ls -Art ../logs | tail -n 1)
+  [[ -z $LOG_FILE ]] && return 0
+  LOG_FILE="../logs/$LOG_FILE"
+
+  if [[ -n $(find "${LOG_FILE}" -mmin -1 -print) ]]; then
+    warn "Last run was less than a min ago... please wait a minute"
+    sleep 60
+  fi
+  if [[ -n $(find "${LOG_FILE}" -mmin -1 -print) ]]; then
+    warn "Existing Terraform process is already running... please wait"
+    plan_info
+    monitor_loop
+    log "Starting a new terraform process... please wait"
+  else
+    # No log files updated in last 1 min; Invalid TF lock file
+    if [[ -f ./.terraform.tfstate.lock.info ]]; then
+      rm -f ./.terraform.tfstate.lock.info
+    fi
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Delete stale nodes on PowerVS resource
+#-------------------------------------------------------------------------
+function delete_failed_instance {
+  NODE=$1
+  COUNT=$2
+  instance_name=""
+  n=0
+  while [[ "$n" -lt $COUNT ]]; do
+    if ! checkState "module.nodes.ibm_pi_instance.${NODE}[${n}]"; then
+      [[ "$NODE" == "bootstrap" ]] && instance_name="${NAME_PREFIX}${NODE}" || instance_name="${NAME_PREFIX}${NODE}-$n"
+      warn "$instance_name: Trying to delete the instance that exist on the cloud when status is not BUILD"
+      instance_id=$($CLI_PATH pi instances | grep "$instance_name" | awk '{print $1}')
+      while [[ $($CLI_PATH pi instance "$instance_id" | grep "^Status" | awk '{print $2}') == "BUILD" ]]; do
+        # Cannot delete instance in BUILD status
+        sleep 30
+      done
+      $CLI_PATH pi instance-delete "$instance_id"
+      # Some breather for the delete action to complete
+      sleep 30
+    fi
+    n=$(( n + 1 ))
+  done
+}
+
+#-------------------------------------------------------------------------
+# Retry and monitor the terraform commands
+#-------------------------------------------------------------------------
+function retry_terraform {
+  PERCENT=0
+  action=$1
+  options=$2
+  cmd="$TF $action $options -auto-approve"
+
+  # bootstrap node already deleted; subsequent cmds should have bootstrap count as 0
+  [[ -f "$BOOTSTRAP_DELETE_VARFILE" ]] && cmd="$cmd -var-file $BOOTSTRAP_DELETE_VARFILE"
+
+  while [[ -f ./tfplan ]] && [[ $(find ./tfplan -mmin -1 -print) ]]; do
+    # Concurrent plan requests will fail; last plan was in less than a min
+    sleep $SLEEP_TIME
+  done
+
+  is_terraform_running
+
+  # Running terraform plan
+  # shellcheck disable=SC2086
+  $TF plan $vars -input=false > ./tfplan
+  # TODO: If plan does not create new resource then exit
+  plan_info
+
+  for (( ATTEMPT=1; ATTEMPT <= NO_OF_RETRY; ATTEMPT++ )); do
+    LOG_FILE="../logs/${LOGFILE}_${action}_$ATTEMPT.log"
+    echo "Attempt: $ATTEMPT/$NO_OF_RETRY"
+    {
+    echo "========================"
+    echo "Attempt: $ATTEMPT/$NO_OF_RETRY"
+    echo "$cmd"
+    echo "========================"
+    } >> "$LOG_FILE"
+
+    if [[ "$TF_TRACE" -eq 0 ]]; then
+      $cmd >> "$LOG_FILE" 2>&1 &
+    else
+      $cmd 2>&1 | tee "$LOG_FILE" &
+    fi
+
+    monitor_loop
+
+    # Check if errors exist
+    if grep -c "Error:" "$LOG_FILE" >/dev/null; then
+      log "Encountered below errors:"
+      grep "Error:" "$LOG_FILE" | sort | uniq
+
+      # Handle unknown provisioning errors
+      if grep "failed to provision unknown error (status 504)" "$LOG_FILE" >/dev/null || grep "invalid name server name already exists for cloud-instance" "$LOG_FILE" >/dev/null; then
+        warn "Unknown issues were seen while provisioning cluster nodes. Verifying if failed nodes were created on the cloud..."
+        if [[ $PERCENT -ge 10 ]]; then
+          # PERCENT>10 means bastion is already created
+          delete_failed_instance bootstrap "$BOOTSTRAP_COUNT"
+          delete_failed_instance master "$MASTER_COUNT"
+          delete_failed_instance worker "$WORKER_COUNT"
+        else
+          delete_failed_instance bastion "$BASTION_COUNT"
+        fi
+      elif grep "${NAME_PREFIX}pub-net network name already exists for cloud instance" "$LOG_FILE" >/dev/null; then
+        warn "Trying to delete the existing public network..."
+        network_name="${NAME_PREFIX}pub-net"
+        network_id=$($CLI_PATH pi networks | grep "$network_name" | awk '{print $1}')
+        [[ -n $network_id ]] && $CLI_PATH pi network-delete "$network_id"
+      fi
+
+      # All tries exhausted
+      if [[ $ATTEMPT -eq $NO_OF_RETRY ]]; then
+        error "Terraform command failed after $NO_OF_RETRY attempts! Please check the log files"
+      fi
+      # Nothing to do other than retry
+      warn "Issues were seen while running the terraform command. Attempting to run again..."
+      sleep $SLEEP_TIME
+    else
+      if [[ $action == "destroy" ]];then
+        rm -f "$BOOTSTRAP_DELETE_VARFILE"
+      elif [[ $action == "apply" ]] && [[ ! -f "$BOOTSTRAP_DELETE_VARFILE" ]]; then
+        log "Deleting the bootstrap node... please wait"
+        # Create the bootstrap delete var file
+        echo "bootstrap = {count = 0, memory = \"32\", processors = \"0.5\"}" > "$BOOTSTRAP_DELETE_VARFILE"
+        # Restart the loop for re-apply to delete the bootstrap node
+        action="delete_bootstrap"
+        cmd="$cmd -var-file $BOOTSTRAP_DELETE_VARFILE"
+        ATTEMPT=0
+        continue
+      fi
+      break
+    fi
+  done
+  log "Completed running the terraform command."
+}
+
+
+#-------------------------------------------------------------------------
+# Initialize and validate the Terraform code with plugins
+#-------------------------------------------------------------------------
+function init_terraform {
+  log "Initializing Terraform plugins and validating the code..."
+  if [[ "$ARCH" == "ppc64le" ]]; then
+    retry "$TF init --plugin-dir ../" > /dev/null
+  else
+    retry "$TF init" > /dev/null
+  fi
+  $TF validate > /dev/null
+}
+
+#-------------------------------------------------------------------------
+# Verify if pull-secret.txt exists
+# Check if SSH key-pair is provided else use users key or create a new one
+#-------------------------------------------------------------------------
+function verify_data {
+  if [ ! -s "$VAR_PULL_SECRET_FILE" ]; then
+    if [ -s "./pull-secret.txt" ]; then
+      cp -f ./pull-secret.txt ./"$ARTIFACTS_DIR"/data/
+    else
+      error "File pull-secret.txt not found"
+    fi
+  fi
+  if [ ! -s "$VAR_PRIVATE_KEY_FILE" ] && [ ! -s "$VAR_PUBLIC_KEY_FILE" ]; then
+    if [ -s "./id_rsa" ] && [ -s "./id_rsa.pub" ]; then
+      log "Found id_rsa & id_rsa.pub in current directory"
+      cp -f ./id_rsa ./id_rsa.pub ./"$ARTIFACTS_DIR"/data/
+    else
+      warn "Creating new SSH key-pair..."
+      ssh-keygen -t rsa -f ./id_rsa -N ''
+      cp -f "./id_rsa" "./id_rsa.pub" ./"$ARTIFACTS_DIR"/data/
+    fi
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Common checks for apply and destroy functions
+#-------------------------------------------------------------------------
+function precheck_input {
+
+  if [ -z "$vars" ]; then
+    if [ ! -f "var.tfvars" ]; then
+      warn "No variables specified or var.tfvars does not exist.. running variables command" && variables
+    fi
+    varfile="var.tfvars"
+    vars="-var-file ../$varfile"
+    SERVICE_INSTANCE_ID=$(read_varfile "service_instance_id")
+    [[ -z "$SERVICE_INSTANCE_ID" ]] && error "Required input variable 'service_instance_id' not found"
+    debug_switch
+    VAR_IBMCLOUD_API_KEY=$(read_varfile "ibmcloud_api_key")
+    VAR_RHEL_SUBS_PASS=$(read_varfile "rhel_subscription_password")
+    debug_switch
+    VAR_PULL_SECRET_FILE=$(read_varfile "pull_secret_file")
+    VAR_PRIVATE_KEY_FILE=$(read_varfile "private_key_file")
+    VAR_PUBLIC_KEY_FILE=$(read_varfile "public_key_file")
+    VAR_RHEL_SUBS_USER=$(read_varfile "rhel_subscription_username")
+  fi
+
+  if [[ -n "$flavor" ]]; then
+    vars+=" -var-file ./compute-vars/$flavor.tfvars"
+  fi
+
+  debug_switch
+  if [ -n "$VAR_RHEL_SUBS_USER" ] && [ -z "$RHEL_SUBS_PASSWORD" ] && [ -z "$VAR_RHEL_SUBS_PASS" ]; then
+    error "Please export RHEL_SUBS_PASSWORD or set 'rhel_subscription_password' variable"
+  fi
+  [[ "${RHEL_SUBS_PASSWORD}" != "" ]] && export TF_VAR_rhel_subscription_password="$RHEL_SUBS_PASSWORD"
+  # If provided varfile does not have API key read from env
+  [[ -n $VAR_IBMCLOUD_API_KEY ]] && IBMCLOUD_API_KEY=$VAR_IBMCLOUD_API_KEY
+  if [[ -z "${IBMCLOUD_API_KEY}" ]]; then
+    error "Please export IBMCLOUD_API_KEY"
+  else
+    export TF_VAR_ibmcloud_api_key="$IBMCLOUD_API_KEY"
+  fi
+  debug_switch
+
+  verify_data
+
+  cd ./"$ARTIFACTS_DIR"
+}
+
+#-------------------------------------------------------------------------
+# Login to IBM Cloud and target the service instance
+#-------------------------------------------------------------------------
+function powervs_login {
+  log "Trying to login with the provided IBMCLOUD_API_KEY..."
+  debug_switch
+  $CLI_PATH login --apikey "$IBMCLOUD_API_KEY" -q --no-region > /dev/null
+  debug_switch
+  CRN=$($CLI_PATH pi service-list 2>/dev/null | grep "${SERVICE_INSTANCE_ID}" | awk '{print $1}')
+  [[ -z $CRN ]] && error "Cannot find PowerVS service instance with ID: $SERVICE_INSTANCE_ID for this account"
+  SVCNAME=$($CLI_PATH pi service-list | grep "${SERVICE_INSTANCE_ID}" | awk '{$1=""; print $0}' | sed 's/^[ ]*//g')
+  $CLI_PATH pi service-target "$CRN" 1>/dev/null
+  log "Targeting '$SVCNAME' with Id $CRN"
+}
+
+#-------------------------------------------------------------------------
+# Check and run setup
+#-------------------------------------------------------------------------
+function precheck_artifacts {
+  # Run setup if no artifacts
+  if [[ ! -d $ARTIFACTS_DIR ]]; then
+    warn "Cannot find artifacts directory... running setup command"
+    setup
+  fi
+  # ignore check for dev preview install
+  if grep -F openshift_install_tarball $ARTIFACTS_DIR/var.tfvars | grep -q "ocp-dev-preview"; then
+    return
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Create the cluster
+#-------------------------------------------------------------------------
+function apply {
+  # Run setup if no artifacts
+  precheck_artifacts
+  precheck_input
+  powervs_login
+  init_terraform
+  log "Running terraform apply... please wait"
+  retry_terraform apply "$vars -input=false"
+  cluster_access_info && success "Congratulations! create command completed"
+}
+
+#-------------------------------------------------------------------------
+# Destroy the cluster
+#-------------------------------------------------------------------------
+function destroy {
+  if [[ ! -d $ARTIFACTS_DIR ]] || [[ ! -f "$ARTIFACTS_DIR"/terraform.tfstate ]]; then
+    error "No artifacts or state file exist!"
+  fi
+  if [[ $($TF state list -state="$ARTIFACTS_DIR"/terraform.tfstate | wc -l) -eq 0 ]]; then
+    rm -f $ARTIFACTS_DIR/terraform.tfstate
+    error "Nothing to destroy!" && return
+  fi
+  if [[ $FORCE_DESTROY -eq 0 ]]; then
+    question "Are you sure you want to proceed with destroy?" "yes no"
+    if [[ "${value}" != "yes" ]]; then
+      error "Exiting on user request" && return
+    fi
+  fi
+  precheck_input
+  log "Running terraform destroy... please wait"
+  retry_terraform destroy "$vars -input=false"
+  rm -f ./terraform.tfstate
+  success "Done! destroy command completed"
+}
+
+#-------------------------------------------------------------------------
+# Display the cluster access information
+#-------------------------------------------------------------------------
+function cluster_access_info {
+  if [[ -f ./terraform.tfstate ]] && checkState "module.install.null_resource.install"; then
+    # TODO: Find a way to change the bastion user as per TF variable; default is root
+    if [ -s "$VAR_PRIVATE_KEY_FILE" ]; then
+      echo "Login to bastion: $(highlight "$($TF output -raw bastion_ssh_command | sed 's/,.*//')") and start using the 'oc' command."
+    else
+      echo "Login to bastion: $(highlight "$($TF output -raw bastion_ssh_command | sed 's/,.*//' | sed 's/data/'"$ARTIFACTS_DIR"'\/data/')") and start using the 'oc' command."
+    fi
+    $($TF output -raw bastion_ssh_command | sed 's/,.*//') -q -o StrictHostKeyChecking=no cat /root/openstack-upi/auth/kubeconfig > ./kubeconfig
+    echo "To access the cluster on local system when using 'oc' run: $(highlight "export KUBECONFIG=$PWD/kubeconfig")"
+    echo "NOTE: 'oc' on local system will not work for WDC04 and DAL13 DC. Login to bastion system to use 'oc'"
+    echo "Access the OpenShift web-console here: $(highlight "$($TF output web_console_url)")"
+    echo "Login to the console with user: $(highlight "kubeadmin") and password: $(highlight "$($($TF output -raw bastion_ssh_command | sed 's/,.*//') -q -o StrictHostKeyChecking=no cat /root/openstack-upi/auth/kubeadmin-password)")"
+    if [[ $($TF output etc_hosts_entries 2>/dev/null) ]]; then
+      echo "Add the following records to your DNS server: $(highlight "$($TF output -raw dns_entries)")"
+      echo "Alternatively, you can add the line on local system 'hosts' file: $(highlight "$($TF output -raw etc_hosts_entries)")"
+    fi
+  else
+    return 1
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Display the access information of installed OpenShift cluster
+#-------------------------------------------------------------------------
+function access-info {
+  [[ -d $ARTIFACTS_DIR ]] && cd ./"$ARTIFACTS_DIR"
+  if ! cluster_access_info; then
+    error "Cluster is not installed"
+  fi
+}
+
+# -------------------------------------------------------------------------
+# Function to read sensitive data by masking with asterisk
+# -------------------------------------------------------------------------
+function read_sensitive_data {
+  stty -icanon
+  stty -echo
+  charcount=0
+  # Empty prompt
+  prompt=''
+  while IFS= read -sp "$prompt" -r -n 1 ch
+  do
+      # Enter - accept password
+      if [[ $ch == $'\0' ]] ; then
+          break
+      fi
+      # Backspace
+      if [[ $ch == $'\177' ]] ; then
+          if [ $charcount -gt 0 ] ; then
+              charcount=$((charcount-1))
+              prompt=$'\b \b'
+              value="${value%?}"
+          else
+              prompt=''
+          fi
+      else
+          charcount=$((charcount+1))
+          prompt='*'
+          value+="$ch"
+      fi
+  done
+  stty sane
+  # New line
+  echo
+}
+
+#-------------------------------------------------------------------------
+# Util for questions prompt
+# 1.multi-choice 2.free-style input 3.free-style with a default value
+#-------------------------------------------------------------------------
+function question {
+  value=""
+  # question to ask
+  message=$1
+  # array of options eg: "a b c".
+  options=($2)
+  len=${#options[@]}
+  force_select=$3
+
+  if [[ $options == "-sensitive" ]]; then
+    log "> $message"
+    # read -s value
+    read_sensitive_data
+    return 0
+  fi
+
+  if [[ $len -gt 1 ]] || [[ -n "$force_select" ]]; then
+    # Multi-choice
+    # Allow select prompt even for if a single option.
+    log "> $message"
+    # Handle Ctrl-C when in select loop
+    # https://unix.stackexchange.com/questions/513466/bash-ignoring-sigint-trap-when-select-loop-is-running
+    set -o posix
+
+    # shellcheck disable=SC2068
+    select value in ${options[@]}
+    do
+    if [ "$value" == "" ]; then
+      echo 'Invalid value... please re-select'
+    else
+      break
+    fi
+    done
+    set +o posix
+  elif [[ $len -eq 1 ]]; then
+    # Input question with default value
+    # If only 1 option is sent then use it for default value prompt.
+    log "> $message (${options[0]})"
+    read -p "? " value
+    [[ "${value}" == "" ]] && value="${options[0]}"
+  else
+    # Input question without any default value.
+    log "> $message"
+    read -p "? " value
+  fi
+  echo "- You have answered: $value"
+}
+
+#-------------------------------------------------------------------------
+# Interactive prompts for nodes configuration
+#-------------------------------------------------------------------------
+function variables_nodes {
+
+  if [[ -z $flavor ]]; then
+    question "Do you want to configure High Availability for bastion nodes?" "yes no"
+    if [ "${value}" == "yes" ]; then
+      IS_HA=1
+    fi
+  fi
+
+  if [[ $IS_HA -eq 1 ]]; then
+    no_of_bastion=2
+  else
+    no_of_bastion=1
+  fi
+
+  if [[ -n $flavor ]]; then
+    cat automation/compute-vars/"$flavor".tfvars >> "$VAR_TEMPLATE"
+    return 0
+  else
+    flavor_list=($(ls automation/compute-vars/))
+    flavor_list=(${flavor_list[*]/.tfvars/} CUSTOM)
+    question "Select the flavor for the cluster nodes:" "${flavor_list[*]}" yes
+    if [ "${value}" != "CUSTOM" ]; then
+      cat automation/compute-vars/"$value".tfvars >> "$VAR_TEMPLATE"
+      if [ "${no_of_bastion}" -eq 2 ]; then
+        rc=$(sed --version 2>/dev/null | grep -oc GNU)
+        if [[ "$OS" == "darwin" && $rc == 0 ]]; then
+          sed -i '' -e 's/\(bastion.*\) 1/\1 2/' "$VAR_TEMPLATE";
+        else
+          sed -i 's/\(bastion.*\) 1/\1 2/' "$VAR_TEMPLATE";
+        fi
+      fi
+      return 0
+    fi
+  fi
+
+  question "Do you want to use the default configuration for all the cluster nodes?" "yes no"
+  if [ "${value}" == "yes" ]; then
+    {
+      echo "bastion = {memory = \"16\", processors = \"1\", \"count\" = $no_of_bastion}"
+      echo "bootstrap = {memory = \"32\", processors = \"0.5\", \"count\" = 1}"
+      echo "master = {memory = \"32\", processors = \"0.5\", \"count\" = 3}"
+      echo "worker = {memory = \"32\", processors = \"0.5\", \"count\" = 2}"
+    } >> "$VAR_TEMPLATE"
+    return 0
+  fi
+
+  # Bastion node config
+  question "Do you want to use the default configuration for bastion node? (memory(GB)=16 processors=1)" "yes no"
+  if [ "${value}" == "yes" ]; then
+    echo "bastion = {memory = \"16\", processors = \"1\", \"count\" = $no_of_bastion}" >> "$VAR_TEMPLATE"
+  else
+    question "Enter the memory required for bastion nodes" "16"
+    memory="${value}"
+    question "Enter the processors required for bastion nodes" "1"
+    proc="${value}"
+    echo "bastion = {memory = \"$memory\", processors = \"$proc\", \"count\" = $no_of_bastion}" >> "$VAR_TEMPLATE"
+  fi
+
+  # Bootstrap node config
+  question "Do you want to use the default configuration for bootstrap node? (memory(GB)=32 processors=0.5)" "yes no"
+  if [ "${value}" == "yes" ]; then
+    echo "bootstrap = {memory = \"32\", processors = \"0.5\", \"count\" = 1}" >> "$VAR_TEMPLATE"
+  else
+    question "Enter the memory required for bootstrap node" "32"
+    memory="${value}"
+    question "Enter the processors required for bootstrap node" "0.5"
+    proc="${value}"
+    echo "bootstrap = {memory = \"$memory\", processors = \"$proc\", \"count\" = 1}" >> "$VAR_TEMPLATE"
+  fi
+
+  # Master nodes config
+  question "Do you want to use the default configuration for master nodes? (memory(GB)=32 processors=0.5 count=3)" "yes no"
+  if [ "${value}" == "yes" ]; then
+    echo "master = {memory = \"32\", processors = \"0.5\", \"count\" = 3}" >> "$VAR_TEMPLATE"
+  else
+    question "Enter the memory required for master nodes" "32"
+    memory="${value}"
+    question "Enter the processors required for master nodes" "0.5"
+    proc="${value}"
+    # TODO: Uncomment when we have support for masters >3
+    #question "Select the count of master nodes" "3 5"
+    #count="${value}"
+    count=3
+    echo "master = {memory = \"$memory\", processors = \"$proc\", \"count\" = $count}" >> "$VAR_TEMPLATE"
+  fi
+
+  # Worker nodes config
+  question "Do you want to use the default configuration for worker nodes? (memory(GB)=32 processors=0.5 count=2)" "yes no"
+  if [ "${value}" == "yes" ]; then
+    echo "worker = {memory = \"32\", processors = \"0.5\", \"count\" = 2}" >> "$VAR_TEMPLATE"
+  else
+    question "Enter the memory required for worker nodes" "32"
+    memory="${value}"
+    question "Enter the processors required for worker nodes" "0.5"
+    proc="${value}"
+    question "Enter the count of worker nodes" "2"
+    count="${value}"
+    echo "worker = {memory = \"$memory\", processors = \"$proc\", \"count\" = $count}" >> "$VAR_TEMPLATE"
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Interactive prompts to populate the var.tfvars file
+#-------------------------------------------------------------------------
+function variables {
+  precheck_artifacts
+
+  VAR_TEMPLATE="./var.tfvars.tmp"
+  VAR_FILE="./var.tfvars"
+  rm -f "$VAR_TEMPLATE"
+
+  # To handle input data with spaces in it
+  IFS=$'\n'
+
+  debug_switch
+  [[ -n $VAR_IBMCLOUD_API_KEY ]] && IBMCLOUD_API_KEY=$VAR_IBMCLOUD_API_KEY
+  [ "${IBMCLOUD_API_KEY}" == "" ] && error "Please export IBMCLOUD_API_KEY"
+  log "Trying to login with the provided IBMCLOUD_API_KEY..."
+  $CLI_PATH login --apikey "$IBMCLOUD_API_KEY" -q --no-region > /dev/null
+  debug_switch
+
+  ALL_SERVICE_INSTANCE=$($CLI_PATH pi service-list --json| grep "Name" | cut -f4 -d\")
+  [ -z "$ALL_SERVICE_INSTANCE" ] && error "No service instance found in your account"
+
+  question "Select the Service Instance name to use:" "$ALL_SERVICE_INSTANCE"
+  service_instance="$value"
+
+  CRN=$($CLI_PATH pi service-list 2>/dev/null | grep "${service_instance}" | awk '{print $1}')
+  $CLI_PATH pi service-target "$CRN"
+
+  log "Gathering information from the selected Service Instance... Please wait"
+  ZONE=$(echo "$CRN" | cut -f6 -d":")
+  REGION=$(echo "$ZONE" | sed 's/-*[0-9].*//')
+  SERVICE_INSTANCE_ID=$(echo "$CRN" | cut -f8 -d":")
+
+  if [[ $DISPLAY_ALL_IMAGES -eq 1 ]]; then
+    # There should be at least 1 RHCOS boot image. Stock CentOS can be used for RHEL/bastion.
+    BOOT_IMAGES_COUNT=$($CLI_PATH pi images --json | grep name | cut -f4 -d\" | wc -l)
+    [[ "$BOOT_IMAGES_COUNT" -lt 1 ]] && error "There should be at least 1 boot image (RHCOS) found 0"
+    # Get all catalog and boot images
+    CATALOG_IMAGES=$($CLI_PATH pi image-list-catalog --json | grep name | cut -f4 -d\")
+    BOOT_IMAGES=$($CLI_PATH pi images --json | grep name | cut -f4 -d\")
+    RHEL_IMAGES="${CATALOG_IMAGES}${IFS}${BOOT_IMAGES}"
+    RHCOS_IMAGES=$RHEL_IMAGES
+  else
+    # Stock CentOS can be used for RHEL/bastion.
+    CATALOG_RHEL_IMAGES=$($CLI_PATH pi image-list-catalog --json | grep name | grep -iE 'rhel|centos' | cut -f4 -d\")
+    BOOT_IMAGES=$($CLI_PATH pi images --json | grep name | grep -vi rhcos | cut -f4 -d\")
+    RHEL_IMAGES="${CATALOG_RHEL_IMAGES}${IFS}${BOOT_IMAGES}"
+    RHCOS_IMAGES=$($CLI_PATH pi images --json | grep name | grep -vi rhel | grep -vi centos | grep -i "rhcos-${RELEASE_VER//.}-" | cut -f4 -d\")
+    [[ -z $RHCOS_IMAGES ]] && error "Cannot find RHCOS image for OCP $RELEASE_VER! Please use option '-all-images' if you have already imported the image"
+  fi
+
+  # FIXME: Filter out only pub-vlan from the list; using grep currently
+  ALL_NETS=$($CLI_PATH pi nets --json| grep name | cut -f4 -d\" | grep -v "\-pub-net" || true)
+  [ -z "$ALL_NETS" ] && error "No private network found"
+
+  RAW_OCP_VERSIONS=$(curl -skL https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/| grep "$RELEASE_VER" | cut -f2 -d '>' | cut -f1 -d '<' | tac)
+  ALL_OCP_VERSIONS=""
+  for item in $RAW_OCP_VERSIONS
+  do
+    if [[ $item =~ ^$RELEASE_VER ]]; then ALL_OCP_VERSIONS="$ALL_OCP_VERSIONS $item"
+    else
+      ver_num=$(cut -f2 -d '-' <<< $item)
+      if [[ $ver_num =~ ^$RELEASE_VER ]]; then ALL_OCP_VERSIONS="$ALL_OCP_VERSIONS $item"; fi
+    fi
+  done
+
+  [ -z "$ALL_OCP_VERSIONS" ] && error "No OCP versions found for version $RELEASE_VER... Ensure you have set correct RELEASE_VER"
+
+  ALL_SYSTEM_TYPES=$($CLI_PATH pi system-pool 2>/dev/null | grep "System Type" | awk '{print $3}' | sort | uniq)
+  [ -z "$ALL_SYSTEM_TYPES" ] && error "Cannot find available System Types... please try again"
+
+  # TODO: Get region from a map of `zone:region` or any other good way
+  {
+    echo "ibmcloud_region = \"${REGION}\""
+    echo "ibmcloud_zone = \"${ZONE}\""
+    echo "service_instance_id = \"${SERVICE_INSTANCE_ID}\""
+  } >> $VAR_TEMPLATE
+
+  # RHEL image name
+  question "Select the RHEL image to use for bastion node:" "$RHEL_IMAGES" yes
+  echo "rhel_image_name =  \"${value}\"" >> $VAR_TEMPLATE
+
+  # RHCOS image name
+  question "Select the RHCOS image to use for cluster nodes:" "$RHCOS_IMAGES" yes
+  echo "rhcos_image_name =  \"${value}\"" >> $VAR_TEMPLATE
+
+  # PowerVS instance system type
+  question "Select the system type to use for cluster nodes:" "$ALL_SYSTEM_TYPES" yes
+  echo "system_type =  \"${value}\"" >> $VAR_TEMPLATE
+
+  # PowerVS private network
+  question "Select the private network to use:" "$ALL_NETS" yes
+  echo "network_name =  \"${value}\"" >> $VAR_TEMPLATE
+
+  IFS=$OLD_IFS
+
+  # OpenShift mirror links
+  question "Select the OCP version to use:" "$ALL_OCP_VERSIONS" yes
+  OCP_IURL="https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/${value}/openshift-install-linux.tar.gz"
+  OCP_CURL="https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/${value}/openshift-client-linux.tar.gz"
+  echo "openshift_install_tarball =  \"${OCP_IURL}\"" >> $VAR_TEMPLATE
+  echo "openshift_client_tarball =  \"${OCP_CURL}\"" >> $VAR_TEMPLATE
+
+
+  # Cluster id
+  question "Enter a short name to identify the cluster" "test-ocp"
+  echo "cluster_id_prefix = \"${value}\"" >> $VAR_TEMPLATE
+
+  # Cluster domain
+  question "Enter a domain name for the cluster" "ibm.com"
+  echo "cluster_domain = \"${value}\"" >> $VAR_TEMPLATE
+
+ # Nodes configuration
+  variables_nodes
+
+  if [[ $IS_HA -ne 1 ]]; then
+    # Storage
+    question "Do you need NFS storage to be configured?" "yes no"
+    if [ "${value}" == "yes" ]; then
+      question "Enter the NFS volume size(GB)" "300"
+      echo "storage_type = \"nfs\"" >> $VAR_TEMPLATE
+      echo "volume_size = \"${value}\"" >> $VAR_TEMPLATE
+    elif [ "${value}" == "no" ]; then
+      echo "storage_type = \"none\"" >> $VAR_TEMPLATE
+    fi
+  fi
+
+  question "Enter RHEL subscription username for bastion nodes"
+  echo "rhel_subscription_username = \"${value}\"" >> $VAR_TEMPLATE
+  if [ "${value}" == "" ]; then
+    warn "Skipping subscription information since no username is provided"
+  else
+    debug_switch
+    if [[ "${RHEL_SUBS_PASSWORD}" != "" ]]; then
+      warn "Using the subscription password from environment variables"
+    else
+      question "Enter the password for above username. WARNING: If you do not wish to store the subscription password please export RHEL_SUBS_PASSWORD" "-sensitive"
+      if [[ "${value}" != "" ]]; then
+        echo "rhel_subscription_password = \"${value}\"" >> $VAR_TEMPLATE
+      fi
+    fi
+    debug_switch
+  fi
+
+  if [ -s "./pull-secret.txt" ]; then
+    echo "pull_secret_file = \"$PWD/pull-secret.txt\"" >> $VAR_TEMPLATE
+  else
+    debug_switch
+    question "Enter the pull-secret" "-sensitive"
+    if [[ "${value}" != "" ]]; then
+      echo "${value}" > ./"$ARTIFACTS_DIR"/data/pull-secret.txt
+      echo "pull_secret_file = \"$PWD/$ARTIFACTS_DIR/data/pull-secret.txt\"" >> $VAR_TEMPLATE
+    fi
+    debug_switch
+  fi
+
+  if [ -s "./id_rsa" ] && [ -s "./id_rsa.pub" ]; then
+    log "Found id_rsa & id_rsa.pub in current directory"
+    echo "private_key_file = \"$PWD/id_rsa\"" >> $VAR_TEMPLATE
+    echo "public_key_file = \"$PWD/id_rsa.pub\"" >> $VAR_TEMPLATE
+  elif [ -s "$HOME/.ssh/id_rsa" ] && [ -s "$HOME/.ssh/id_rsa.pub" ]; then
+    question "Found SSH key pair in $HOME/.ssh/ do you want to use them?" "yes"
+    if [ "${value}" == "yes" ]; then
+      echo "private_key_file = \"$HOME/.ssh/id_rsa\"" >> $VAR_TEMPLATE
+      echo "public_key_file = \"$HOME/.ssh/id_rsa.pub\"" >> $VAR_TEMPLATE
+    fi
+  fi
+
+  question "Do you want to use IBM Cloud Classic DNS and VPC Load Balancer services?" "yes no"
+  if [ "${value}" == "yes" ]; then
+	question "Enter IBM Cloud VPC name"
+	if [[ "${value}" != "" ]]; then
+	  echo "ibm_cloud_vpc_name = \"${value}\"" >> $VAR_TEMPLATE
+	else
+	  error "IBM Cloud VPC name must be non-empty for using IBM Cloud Services"
+	fi
+	question "Enter IBM Cloud VPC subnet name"
+	if [[ "${value}" != "" ]]; then
+	  echo "ibm_cloud_vpc_subnet_name = \"${value}\"" >> $VAR_TEMPLATE
+	else
+	  error "IBM Cloud VPC subnet name must be non-empty for using IBM Cloud Services"
+	fi
+	echo "use_ibm_cloud_services = \"true\"" >> $VAR_TEMPLATE
+	question "Enter IBM Cloud VPC Infrastructure region. (Power VS region will be used for VPC if you do not provide any value)."
+	if [[ "${value}" != "" ]]; then
+	  echo "iaas_vpc_region = \"${value}\"" >> $VAR_TEMPLATE
+	else
+	  echo "iaas_vpc_region = \"${REGION}\"" >> $VAR_TEMPLATE
+	fi
+  fi
+
+  rm -f "$VAR_FILE"
+  mv -f "$VAR_TEMPLATE" "$VAR_FILE"
+  success "variables command completed!"
+}
+
+#-------------------------------------------------------------------------
+# Download the ocp4-upi-powervs tag/branch artifact
+#-------------------------------------------------------------------------
+function setup_artifacts() {
+  if [[ -f ./"$ARTIFACTS_DIR"/terraform.tfstate ]]; then
+    if [[ $($TF version | grep 'Terraform v0') != "Terraform v$(grep terraform_version ./"$ARTIFACTS_DIR"/terraform.tfstate | awk '{print $2}' |  cut -d '"' -f2)" ]]; then
+      error "Existing state file was created using a different terraform version. Please destroy the resources by running the destroy command."
+    fi
+    if [[ $($TF state list -state=./"$ARTIFACTS_DIR"/terraform.tfstate | wc -l) -gt 0 ]]; then
+      error "Existing state file contains resources. Please destroy the resources by running the destroy command."
+    fi
+  fi
+
+  log "Downloading code artifacts $ARTIFACTS_VERSION in ./$ARTIFACTS_DIR"
+  retry "curl -fsSL $ARTIFACTS_REPO/archive/$ARTIFACTS_VERSION.zip -o ./automation.zip"
+  unzip -o "./automation.zip" > /dev/null 2>&1
+  rm -rf ./"$ARTIFACTS_DIR" ./automation.zip
+  cp -rf "ocp4-upi-powervs-$ARTIFACTS_VERSION" ./"$ARTIFACTS_DIR"
+  rm -rf "ocp4-upi-powervs-$ARTIFACTS_VERSION"
+}
+
+#-------------------------------------------------------------------------
+# Install latest terraform in current directory
+# If latest is available in System PATH then use symlink
+#-------------------------------------------------------------------------
+function setup_terraform {
+  EXT_PATH=$(which terraform 2> /dev/null || true)
+
+  if [[ "${ARCH}" == "ppc64le" ]]; then
+    TF_LATEST=$(curl -s https://api.github.com/repos/ppc64le-development/terraform-ppc64le/releases/latest | grep tag_name | cut -d '"' -f4)
+  else
+    TF_LATEST=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep tag_name | cut -d '"' -f4)
+  fi
+
+  if [[ -f $TF && $($TF version | grep 'Terraform v') == "Terraform ${TF_LATEST}" ]]; then
+    return
+  elif [[ -n "$EXT_PATH" && $($EXT_PATH version | grep 'Terraform v') == "Terraform ${TF_LATEST}" ]]; then
+    TF="$EXT_PATH"
+    return
+  else
+    log "Installing the latest version of Terraform..."
+    if [[ "${ARCH}" == "ppc64le" ]]; then
+      retry "curl --connect-timeout 30 -fsSL https://github.com/ppc64le-development/terraform-ppc64le/releases/download/${TF_LATEST}/terraform-${TF_LATEST} -o ${TF}"
+    else
+      retry "curl --connect-timeout 30 -fsSL https://releases.hashicorp.com/terraform/${TF_LATEST:1}/terraform_${TF_LATEST:1}_${OS}_amd64.zip -o ./terraform.zip"
+      unzip -o ./terraform.zip  >/dev/null 2>&1
+      rm -f ./terraform.zip
+    fi
+    chmod +x "$TF"
+  fi
+  $TF version | grep "Terraform v"
+}
+
+#-------------------------------------------------------------------------
+# Install latest terraform providers for ppc64le
+#-------------------------------------------------------------------------
+function setup_terraform_providers {
+  TF_PPC64LE_PROVIDERS=$(curl -s https://api.github.com/repos/ocp-power-automation/terraform-providers-power/releases/latest| grep browser_download_url | grep 'archive.zip' | cut -d '"' -f4)
+  retry "curl -fsSL $TF_PPC64LE_PROVIDERS -o archive.zip"
+  unzip -o "./archive.zip" >/dev/null 2>&1
+  rm -f "./archive.zip"
+}
+
+#-------------------------------------------------------------------------
+# Install latest power-iaas plugin
+#-------------------------------------------------------------------------
+function setup_poweriaas() {
+  PLUGIN_OP=$("$CLI_PATH" plugin list -q | grep power-iaas || true)
+  if [[ -z "$PLUGIN_OP" ]]; then
+    log "Installing power-iaas plugin..."
+    $CLI_PATH plugin install power-iaas -f -q > /dev/null 2>&1
+  elif [[ "$PLUGIN_OP" == *"Update Available"* ]]; then
+    log "Updating power-iaas plugin..."
+    $CLI_PATH plugin update power-iaas -f -q > /dev/null 2>&1
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Install latest ibmcloud cli in current directory
+# If latest is available in System PATH then use symlink
+#-------------------------------------------------------------------------
+function setup_ibmcloudcli() {
+  CLI_LATEST=$(curl -s https://api.github.com/repos/IBM-Cloud/ibm-cloud-cli-release/releases/latest | grep tag_name | cut -d '"' -f4 | sed 's/v//')
+  [[ -z $CLI_LATEST ]] && error "Cannot determine the latest version of IBM-Cloud CLI"
+
+  EXT_PATH=$(which ibmcloud 2> /dev/null || true)
+
+  if [[ -f $CLI_PATH && $($CLI_PATH -v | sed 's/.*version //' | sed 's/+.*//') == "${CLI_LATEST}" ]]; then
+    return
+  elif [[ -n "$EXT_PATH" && $($EXT_PATH -v | sed 's/.*version //' | sed 's/+.*//') == "${CLI_LATEST}" ]] ; then
+    CLI_PATH="$EXT_PATH"
+    return
+  else
+    log "Installing the latest version of IBM-Cloud CLI..."
+    all_versions_path="https://download.clis.cloud.ibm.com/ibm-cloud-cli-metadata/all_versions.json"
+    download_path=$(curl -s ${all_versions_path} | grep binaries | grep url | grep "${CLI_LATEST}" | grep "${IBM_CLI_OS}\." | cut -d '"' -f 4)
+    [[ -z $download_path ]] && error "Cannot download the latest version of IBM-Cloud CLI"
+    retry "curl -fsSL $download_path -o ./archive"
+    if [[ "$ARCHIVE_TYPE" == "zip" ]]; then
+      unzip -o "./archive" >/dev/null 2>&1
+    else
+      tar -xvzf "./archive" >/dev/null 2>&1
+    fi
+    cp -f ./IBM_Cloud_CLI/ibmcloud "${CLI_PATH}"
+    rm -rf "./archive" ./IBM_Cloud_CLI*
+  fi
+  ${CLI_PATH} -v
+}
+
+
+#-------------------------------------------------------------------------
+# Install oc cli in current directory
+# If latest is available in System PATH then use symlink
+#-------------------------------------------------------------------------
+function setup_occli() {
+
+  OC_BASE_URL="https://mirror.openshift.com/pub/openshift-v4/${ARCH}/clients/ocp/stable-${RELEASE_VER}"
+  OC_DOWNLOAD_URL="${OC_BASE_URL}/openshift-client-${OC_CLI_OS}.${ARCHIVE_TYPE}"
+
+  OC_DEV_BASE_URL="https://mirror.openshift.com/pub/openshift-v4/${ARCH}/clients/ocp-dev-preview/latest-${RELEASE_VER}"
+  OC_DEV_DOWNLOAD_URL="${OC_DEV_BASE_URL}/openshift-client-${OC_CLI_OS}.${ARCHIVE_TYPE}"
+
+  EXT_PATH=$(which oc 2> /dev/null || true)
+
+  if [[ -f $OC_PATH && $($OC_PATH version --client | sed 's/.*version.* //I')  == *"${RELEASE_VER}"* ]]; then
+    return
+  elif [[ -n "$EXT_PATH" && $($EXT_PATH version --client | sed 's/.*version.* //I') == *"${RELEASE_VER}"* ]] ; then
+    OC_PATH="$EXT_PATH"
+    return
+  else
+
+    if curl -o /dev/null -sIw '%{http_code}' "$OC_DOWNLOAD_URL" | grep -q 404; then
+      log "Installing the latest dev preview version of OpenShift CLI..."
+      OC_DOWNLOAD_URL=$OC_DEV_DOWNLOAD_URL
+    else
+      log "Installing the stable version of OpenShift CLI..."
+    fi
+
+    retry "curl -kfsSL $OC_DOWNLOAD_URL -o ./archive"
+    if [[ "$ARCHIVE_TYPE" == "zip" ]]; then
+      unzip -o "./archive" "oc.exe" >/dev/null 2>&1
+    else
+      tar -xvzf "./archive" "oc" >/dev/null 2>&1
+    fi
+    rm -rf "./archive"
+  fi
+  ${OC_PATH} version --client
+}
+
+
+#-------------------------------------------------------------------------
+# Checks for new script version
+#-------------------------------------------------------------------------
+function version_check {
+  LATEST_SCRIPT_VERSION=$(curl -s https://api.github.com/repos/ocp-power-automation/openshift-install-power/releases/latest | grep tag_name | cut -d '"' -f4)
+
+  if checkifnew "$LATEST_SCRIPT_VERSION" "$VERSION"; then
+    warn "There is a new version $LATEST_SCRIPT_VERSION available. We strongly recommend upgrading to the latest version."
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Return 0 if $1 > $2 else return 1
+#-------------------------------------------------------------------------
+function checkifnew {
+  version1=$1
+  version2=$2
+  if [[ "$version1" == "$version2" ]]; then
+    return 1
+  fi
+
+  ver1_major=$(echo "${version1:1}" | cut -d'.' -f1)
+  ver2_major=$(echo "${version2:1}" | cut -d'.' -f1)
+  if [[ ver1_major -gt ver2_major ]]; then
+    return 0
+  elif [[ ver1_major -lt ver2_major ]]; then
+    return 1
+  fi
+  ver1_minor=$(echo "${version1:1}" | cut -d'.' -f2)
+  ver2_minor=$(echo "${version2:1}" | cut -d'.' -f2)
+  if [[ ver1_minor -gt ver2_minor ]]; then
+    return 0
+  elif [[ ver1_minor -lt ver2_minor ]]; then
+    return 1
+  fi
+  ver1_patch=$(echo "${version1:1}" | cut -d'.' -f3)
+  ver2_patch=$(echo "${version2:1}" | cut -d'.' -f3)
+  if [[ ver1_patch -gt ver2_patch ]]; then
+    return 0
+  elif [[ ver1_patch -lt ver2_patch ]]; then
+    return 1
+  fi
+  return 1
+}
+
+#-------------------------------------------------------------------------
+# Install the latest ibmcloud cli, power-iaas plugin and terraform
+#-------------------------------------------------------------------------
+function setup_tools() {
+  check_deps
+  version_check
+  setup_ibmcloudcli
+  setup_poweriaas
+  setup_terraform
+  if [[ "${ARCH}" == "ppc64le" ]]; then
+    setup_terraform_providers
+  fi
+  setup_occli
+}
+
+#-------------------------------------------------------------------------
+# Check for dependency packages
+#-------------------------------------------------------------------------
+function check_deps {
+  if [[ "$OS" == "linux" ]]; then
+    deps_list=(curl unzip tac tar)
+  else
+    deps_list=(curl unzip tac)
+  fi
+  for deps_name in "${deps_list[@]}"
+  do
+    if [[ -z $(command -v "$deps_name") ]]; then
+      if [[ "$OS" == "windows" ]]; then
+        error "Package $deps_name is required! Please install it before using this script"
+      else
+        install_dep "$deps_name"
+      fi
+    fi
+  done
+}
+
+#-------------------------------------------------------------------------
+# Install dependency package
+#-------------------------------------------------------------------------
+function install_dep {
+  dep_name=$1
+
+  # special case for tac command
+  [[ $dep_name == "tac" ]] && dep_name=coreutils
+
+  if [[ "$PACKAGE_MANAGER" != "" ]]; then
+    if [[ "$OS" == "darwin" ]]; then
+      $PACKAGE_MANAGER install -f "$dep_name" > /dev/null 2>&1
+    else
+      $PACKAGE_MANAGER update -y > /dev/null 2>&1
+      $PACKAGE_MANAGER install -y "$dep_name"> /dev/null 2>&1
+    fi
+  fi
+}
+
+#-------------------------------------------------------------------------
+# Install the latest ibmcloud cli, power-iaas plugin and terraform
+# Also download the ocp-power-automation/ocp4-upi-powervs artifact
+#-------------------------------------------------------------------------
+function setup {
+  log "Running setup command..."
+  setup_artifacts
+  success "setup command completed!"
+}
+
+#-------------------------------------------------------------------------
+# Read the given argument from var
+#-------------------------------------------------------------------------
+function process_var {
+  debug_switch
+  var_name=$(echo "$var" | cut -d '=' -f 1)
+  [[ $(echo "$var" | grep -o "[[:blank:]]" | wc -l) -gt 0 ]] && error "The -var '$var_name' option cannot have whitespaces in it. Please use -var-file instead."
+  val=$(echo "$var" | cut -d '=' -f 2)
+  if [[ "$var" != *"="* ]] || [ -z "$var_name" ] || [ -z "$val" ]; then
+    error "The given -var '$var_name' option must be a key-value pair separated by an equals sign, eg: -var \"key=value\""
+  fi
+  debug_switch
+  case $var_name in
+    "service_instance_id")
+      SERVICE_INSTANCE_ID=$val
+      ;;
+    "ibmcloud_api_key")
+      debug_switch
+      VAR_IBMCLOUD_API_KEY=$val
+      debug_switch
+      ;;
+    "rhel_subscription_password")
+      debug_switch
+      VAR_RHEL_SUBS_PASS=$val
+      debug_switch
+      ;;
+    "pull_secret_file")
+      VAR_PULL_SECRET_FILE=$val
+      ;;
+    "private_key_file")
+      VAR_PRIVATE_KEY_FILE=$val
+      ;;
+    "public_key_file")
+      VAR_PUBLIC_KEY_FILE=$val
+      ;;
+    "rhel_subscription_username")
+      VAR_RHEL_SUBS_USER=$val
+      ;;
+  esac
+}
+
+#-------------------------------------------------------------------------
+# Read the given argument from varfile
+#-------------------------------------------------------------------------
+function read_varfile {
+  arg=$1
+  grep "$arg" "$varfile" | xargs | grep -v "^[#/]" | awk '{print $3}'
+}
+
+function process_varfile {
+  var_list=(service_instance_id ibmcloud_api_key rhel_subscription_password pull_secret_file private_key_file public_key_file rhel_subscription_username)
+  for variable_name in "${var_list[@]}"
+  do
+    debug_switch
+    val=$(read_varfile "$variable_name")
+    if [ -z "$val" ]; then
+      continue
+    fi
+    debug_switch
+    case $variable_name in
+      "service_instance_id")
+        SERVICE_INSTANCE_ID=$val
+        ;;
+      "ibmcloud_api_key")
+        debug_switch
+        VAR_IBMCLOUD_API_KEY=$val
+        debug_switch
+        ;;
+      "rhel_subscription_password")
+        debug_switch
+        VAR_RHEL_SUBS_PASS=$val
+        debug_switch
+        ;;
+      "pull_secret_file")
+        VAR_PULL_SECRET_FILE=$val
+        ;;
+      "private_key_file")
+        VAR_PRIVATE_KEY_FILE=$val
+        ;;
+      "public_key_file")
+        VAR_PUBLIC_KEY_FILE=$val
+        ;;
+      "rhel_subscription_username")
+        VAR_RHEL_SUBS_USER=$val
+        ;;
+    esac
+  done
+}
+
+#-------------------------------------------------------------------------
+# Flavor
+#-------------------------------------------------------------------------
+function validate_flavor {
+   [[ -z "$flavor" ]] &&  error "The -flavor option is not provided"
+
+   precheck_artifacts
+
+   flavor_list=($(ls automation/compute-vars/))
+   [[ -e "automation/compute-vars/$flavor.tfvars" ]]  || error "The -flavor '$flavor' is not valid. Please select either '${flavor_list[*]/.tfvars/}'"
+}
+
+#-------------------------------------------------------------------------
+# Perform platform checks
+#-------------------------------------------------------------------------
+function platform_checks {
+  ARCH=$(uname -m)
+  if [[ "${ARCH}" != "x86_64" ]] && [[ "${ARCH}" != "ppc64le" ]] && [[ "${ARCH}" != "arm64" ]]; then
+    warn "Only 64-bit x86 and Power machines are supported"
+    error "Unsupported machine: ${ARCH}" 1
+  fi
+  PLATFORM=$(uname)
+  case "$PLATFORM" in
+    "Darwin")
+      OS_VERSION=$(sw_vers -productVersion 2>/dev/null || echo "")
+      if [[ $IGNORE_OS -eq 0 ]] && [[ $OS_VERSION != "10.15"* && $OS_VERSION != "11."* && $OS_VERSION != "12."* && $OS_VERSION != "13."* ]]; then
+        error "Unsupported OS version ($OS_VERSION) for Mac"
+      fi
+      PACKAGE_MANAGER="brew"
+      OS="darwin"
+      IBM_CLI_OS="macos"
+      OC_CLI_OS="mac"
+      ARCHIVE_TYPE="tar.gz"
+      ;;
+    "Linux")
+      # Linux distro, e.g "Ubuntu", "RedHatEnterpriseWorkstation", "RedHatEnterpriseServer", "CentOS"
+      DISTRO=$(lsb_release -ds 2>/dev/null || cat /etc/*release 2>/dev/null | head -n1 || uname -om || echo "")
+      OS_VERSION=$(lsb_release -rs 2>/dev/null || cat /etc/*release 2>/dev/null | grep "VERSION_ID" | awk -F "=" '{print $2}' | sed 's/"*//g' || echo "")
+      if [[ $IGNORE_OS -eq 0 ]] && [[ "$DISTRO" != *Ubuntu* && "$DISTRO" != *Red*Hat* && "$DISTRO" != *CentOS* ]]; then
+        error "Unsupported Linux distribution"
+      fi
+      if [[ $IGNORE_OS -eq 0 ]] && [[ $OS_VERSION != "16.04" && $OS_VERSION != "18.04" && $OS_VERSION != "20.04" && $OS_VERSION != "22.04" && $OS_VERSION != "8"* ]]; then
+        error "Unsupported OS version ($OS_VERSION) for $DISTRO"
+      fi
+      if [[ "$DISTRO" == *Ubuntu* || "$DISTRO" == *Debian*  ]]; then
+        PACKAGE_MANAGER="$SUDO apt-get"
+      elif [[ "$DISTRO" == *Fedora* ]]; then
+        PACKAGE_MANAGER="$SUDO dnf"
+      else
+        PACKAGE_MANAGER="$SUDO yum"
+      fi
+      OS="linux"
+      if [[ "$ARCH" == "ppc64le" ]]; then
+        IBM_CLI_OS="linux_ppc64le"
+      else
+        IBM_CLI_OS="linux_amd64"
+      fi
+      OC_CLI_OS="$OS"
+      ARCHIVE_TYPE="tar.gz"
+      ;;
+    "MINGW64"*|"CYGWIN"*|"MSYS"*)
+      PACKAGE_MANAGER=""
+      OS="windows"
+      IBM_CLI_OS="windows_amd64"
+      OC_CLI_OS="$OS"
+      ARCHIVE_TYPE="zip"
+      ;;
+    *)
+      warn "Only MacOS, Linux and Windows(Cygwin, Git Bash) are supported"
+      error "Unsupported platform: ${PLATFORM}" 1
+      ;;
+  esac
+}
+
+function display_version {
+  echo "Version $VERSION"
+  exit 0
+}
+
+function main {
+  mkdir -p ./logs
+  vars=""
+
+  # Only use sudo if not running as root
+  [ "$(id -u)" -ne 0 ] && SUDO=sudo || SUDO=""
+
+  # Parse commands and arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    "-trace")
+      warn "Enabling tracing of all executed commands"
+      set -x
+      TRACE=1
+      ;;
+    "-version"|"-v")
+      display_version
+      ;;
+    "-verbose")
+      warn "Enabling verbose for terraform console"
+      TF_TRACE=1
+      ;;
+    "-force-destroy")
+      warn "Enabling forceful destruction option for terraform destroy command"
+      FORCE_DESTROY=1
+      ;;
+    "-flavor")
+      shift
+      flavor="$1"
+      validate_flavor "$flavor"
+      ;;
+    "-ignore-os-checks")
+      warn "Ignoring operating system related checks"
+      IGNORE_OS=1
+      ;;
+    "-ignore-warnings")
+      IGNORE_WARN=1
+      ;;
+    "-all-images")
+      DISPLAY_ALL_IMAGES=1
+      ;;
+    "-var")
+      shift
+      var="$1"
+      vars+=" -var $var"
+      process_var
+      ;;
+    "-var-file")
+      shift
+      varfile="$1"
+      [[ ! -s "$varfile" ]] && error "File $varfile does not exist"
+      vars+=" -var-file ../$varfile"
+      process_varfile
+      ;;
+    "setup")
+      ACTION="setup"
+      ;;
+    "variables")
+      ACTION="variables"
+      ;;
+    "create")
+      ACTION="create"
+      ;;
+    "destroy")
+      ACTION="destroy"
+      ;;
+    "output")
+      ACTION="output"
+      shift
+      output_var="$1"
+      break
+      ;;
+    "access-info")
+      ACTION="access-info"
+      ;;
+    "help")
+      help
+      ;;
+    esac
+    shift
+  done
+
+  [[ -z "$ACTION" ]] && help
+  platform_checks
+  setup_tools
+
+  case "$ACTION" in
+    "setup")        setup;;
+    "variables")    variables;;
+    "create")       apply;;
+    "destroy")      destroy;;
+    "output")       output;;
+    "access-info")  access-info;;
+    *) error "Invalid usage!";;
+  esac
+}
+
+main "$@"

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>**PowerVC Prerequisites** - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "**PowerVC Prerequisites**";
+    var mkdocs_page_input_path = "ocp4-upi-powervm/docs/ocp_prereqs_powervc.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>**PowerVC Prerequisites**</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="powervc-prerequisites"><strong>PowerVC Prerequisites</strong></h1>
+<h2 id="rhcos-and-rhel-8x-images-for-openshift">RHCOS and RHEL 8.X Images for OpenShift</h2>
+<p>You'll need to create RedHat CoreOS (RHCOS) and RHEL 8.2 (or later) image in PowerVC. RHEL 8.x image is used by bastion node, and RHCOS image is used for boostrap, master and worker nodes.</p>
+<p>For RHCOS image creation, follow the steps mentioned
+in the following <a href="../rhcos-image-creation/">doc</a>.</p>
+<p>For RHEL image creation follow the steps mentioned in the following <a href="https://www.ibm.com/docs/en/powervc/2.0.3?topic=working-images">doc</a> , you may either create a new image from ISO, or use a similar method like CoreOS with a qcow2 image.</p>
+<h2 id="compute-templates">Compute Templates</h2>
+<p>You'll need to create <a href="https://www.ibm.com/support/knowledgecenter/en/SSXK2N_1.4.4/com.ibm.powervc.standard.help.doc/powervc_compute_template_hmc.html">compute templates</a> for bastion, bootstrap, master and worker nodes.</p>
+<p>Following are the recommended LPAR configs that you can use when creating the compute templates for different type of nodes</p>
+<ul>
+<li>
+<p>Bootstrap - 2 vCPUs, 16GB RAM, 120 GB Disk.</p>
+</li>
+<li>
+<p>Master - 2 vCPUs, 32GB RAM, 120 GB Disk.</p>
+</li>
+</ul>
+<p>PowerVM LPARs by default uses SMT=8. So with 2vCPUs, the number of logical CPUs as seen by the Operating System will be <strong>16</strong> (<code>2 vCPUs x 8 SMT</code>)</p>
+<p><strong><em>This config is suitable for majority of the scenarios</em></strong></p>
+<ul>
+<li>Worker - 2 vCPUs, 32GB RAM, 120 GB Disk</li>
+</ul>
+<p><strong><em>Increase worker vCPUs, RAM and Disk based on application requirements</em></strong></p>
+<ul>
+<li>Bastion - 2vCPUs, 16GB RAM, 200 GB Disk</li>
+</ul>
+<p><strong><em>Increase bastion vCPUs, RAM and Disk based on application requirements</em></strong></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

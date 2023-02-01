@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Deploying OpenShift on PowerVM managed via PowerVC - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Deploying OpenShift on PowerVM managed via PowerVC";
+    var mkdocs_page_input_path = "ocp4-upi-powervm/README.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Deploying OpenShift on PowerVM managed via PowerVC</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#table-of-contents">Table of Contents</a></li>
+    
+
+    <li class="toctree-l2"><a href="#introduction">Introduction</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#automation-host-prerequisites">Automation Host Prerequisites</a></li>
+        
+            <li><a class="toctree-l3" href="#powervc-prerequisites">PowerVC Prerequisites</a></li>
+        
+            <li><a class="toctree-l3" href="#ocp-install">OCP Install</a></li>
+        
+            <li><a class="toctree-l3" href="#contributing">Contributing</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Deploying OpenShift on PowerVM managed via PowerVC</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="table-of-contents"><strong>Table of Contents</strong></h1>
+<ul>
+<li><a href="#table-of-contents"><strong>Table of Contents</strong></a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#automation-host-prerequisites">Automation Host Prerequisites</a></li>
+<li><a href="#powervc-prerequisites">PowerVC Prerequisites</a></li>
+<li><a href="#ocp-install">OCP Install</a></li>
+<li><a href="#contributing">Contributing</a></li>
+</ul>
+<h1 id="introduction">Introduction</h1>
+<p>The <code>ocp4-upi-powervm</code> <a href="https://github.com/ocp-power-automation/ocp4-upi-powervm">project</a> provides Terraform based automation code to help the deployment of OpenShift Container Platform (OCP) 4.x on PowerVM systems managed by PowerVC.</p>
+<p>If you are using standalone PowerVM please take a look at the <a href="https://github.com/RedHatOfficial/ocp4-helpernode/blob/devel/docs/quickstart-powervm.md">following quickstart guide</a>
+which uses the <a href="https://github.com/RedHatOfficial/ocp4-helpernode">ansible playbook</a> to setup a helper node (bastion) for OCP deployment.</p>
+<p>This project also leverages the same ansible playbook internally for OCP deployment on PowerVM LPARs managed via PowerVC.</p>
+<div class="admonition note">
+<p class="admonition-title">Note<p>For bugs/enhancement requests etc. please open a GitHub <a href="https://github.com/ocp-power-automation/ocp4-upi-powervm/issues">issue</a></p>
+</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning<p><strong>The <a href="https://github.com/ocp-power-automation/ocp4-upi-powervm/tree/master">main</a> branch must be used with latest OCP pre-release versions only. For stable releases please checkout specific release branches -{<a href="https://github.com/ocp-power-automation/ocp4-upi-powervm/tree/release-4.5">release-4.5</a>, <a href="https://github.com/ocp-power-automation/ocp4-upi-powervm/tree/release-4.6">release-4.6</a> ...} and follow the docs in the specific release branches.</strong></p>
+</p>
+</div>
+<h2 id="automation-host-prerequisites">Automation Host Prerequisites</h2>
+<p>The automation needs to run from a system with internet access. This could be your laptop or a VM with public internet connectivity. This automation code has been tested on the following 64-bit Operating Systems:
+- Mac OSX (Darwin)
+- Linux (x86_64/ppc64le)
+- Windows 10</p>
+<p>Follow the <a href="docs/automation_host_prereqs/">guide</a> to complete the prerequisites.</p>
+<h2 id="powervc-prerequisites">PowerVC Prerequisites</h2>
+<p>Follow the <a href="docs/ocp_prereqs_powervc/">guide</a> to complete the PowerVC prerequisites.</p>
+<h2 id="ocp-install">OCP Install</h2>
+<p>Follow the <a href="docs/quickstart/">quickstart</a> guide for OCP installation on PowerVM LPARs managed via PowerVC</p>
+<h2 id="contributing">Contributing</h2>
+<p>Please see the <a href="CONTRIBUTING/">contributing doc</a> for more details.
+PRs are most welcome !!</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../ocp4-upi-kvm/" class="btn btn-neutral float-right" title="Deploying OpenShift on KVM">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../openshift-install-power/" class="btn btn-neutral" title="Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../openshift-install-power/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../ocp4-upi-kvm/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2023-02-01 10:49:06
+-->

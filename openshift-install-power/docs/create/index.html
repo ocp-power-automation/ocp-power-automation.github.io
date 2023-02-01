@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>Command create - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Command create";
+    var mkdocs_page_input_path = "openshift-install-power/docs/create.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Command create</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="command-create">Command create</h1>
+<h2 id="what-it-does">What it does</h2>
+<p>This command when executed will start off the deployment process. You can optionally use other options are listed in the help menu.</p>
+<p>Accepts arguments:</p>
+<pre><code>  -verbose        Enable verbose for terraform console
+  -var            Terraform variable to be passed to the create/destroy command
+  -var-file       Terraform variable file name in current directory. (By default using var.tfvars)
+  -flavor         Cluster compute template to use eg: small, medium, large
+</code></pre>
+<p>The <code>create</code> command will check if all the tools are installed for the deployment to start. If not then it will run the <a href="../setup/">setup</a> command. Next, it will check if the variables file var.tfvars is available in the install directory or provided via argument <code>-var-file</code>, if not then it will run the <a href="../variables/">variables</a> command.</p>
+<p>The compute template can also be changed in the var.tfvars file using the <code>-flavor</code> argument via command <code># ./openshift-install-powervs create -flavor small</code>. The <a href="../flavor/">flavors</a> refer to the templates from https://github.com/ocp-power-automation/ocp4-upi-powervs/tree/main/compute-vars.</p>
+<p>The Terraform console log for each attempt will be stored in <code>logs/</code> directory with file name as <code>ocp4-upi-powervs_&lt;timestamp&gt;_apply_&lt;attempt_number&gt;.log</code>. These log files can be used for debugging purpose.</p>
+<h2 id="usage">Usage</h2>
+<p>When <code>setup</code> and/or <code>variables</code> commands are already completed.</p>
+<pre><code># openshift-install-powervs create
+[setup_tools] Verifying the latest packages and tools
+[powervs_login] Trying to login with the provided IBMCLOUD_API_KEY...
+Targeting service crn:v1:bluemix:public:power-iaas:tor01:a/65b64c1f1c29XXXXXXXXXc:4a7700b1-e318-476b-9bf6-5a88XXXXXXX981::...
+[init_terraform] Initializing Terraform plugins...
+[init_terraform] Validating Terraform code...
+[apply] Running terraform apply... please wait
+Attempt: 1/5
+[retry_terraform] Completed running the terraform command.
+Login to bastion: 'ssh -i automation/data/id_rsa root@145.48.43.53' and start using the 'oc' command.
+To access the cluster on local system when using 'oc' run: 'export KUBECONFIG=/root/ocp-install-dir/automation/kubeconfig'
+Access the OpenShift web-console here: https://console-openshift-console.apps.test-ocp-6f2c.ibm.com
+Login to the console with user: &quot;kubeadmin&quot;, and password: &quot;MHvmI-z5nY8-CBFKF-hmCDJ&quot;
+Add the line on local system 'hosts' file:
+145.48.43.53 api.test-ocp-6f2c.ibm.com console-openshift-console.apps.test-ocp-6f2c.ibm.com integrated-oauth-server-openshift-authentication.apps.test-ocp-6f2c.ibm.com oauth-openshift.apps.test-ocp-6f2c.ibm.com prometheus-k8s-openshift-monitoring.apps.test-ocp-6f2c.ibm.com grafana-openshift-monitoring.apps.test-ocp-6f2c.ibm.com example.apps.test-ocp-6f2c.ibm.com
+[cluster_access_info] SUCCESS: Congratulations! create command completed
+
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

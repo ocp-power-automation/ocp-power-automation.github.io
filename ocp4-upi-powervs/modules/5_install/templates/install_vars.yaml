@@ -1,0 +1,77 @@
+---
+
+install_config:
+   cluster_domain: ${cluster_domain}
+   cluster_id: ${cluster_id}
+   pull_secret: '${pull_secret}'
+   public_ssh_key: '${public_ssh_key}'
+
+workdir: ~/openstack-upi
+storage_type: ${storage_type}
+log_level: ${log_level}
+release_image_override: '${release_image_override}'
+enable_local_registry: ${enable_local_registry}
+fips_compliant: "${fips_compliant}"
+
+rhcos_pre_kernel_options: [%{ for opt in rhcos_pre_kernel_options ~}"${opt}",%{ endfor ~}]
+
+rhcos_kernel_options: [%{ for opt in rhcos_kernel_options ~}"${opt}",%{ endfor ~}]
+
+node_labels:
+%{ for key,value in node_labels ~}
+  ${key}: "${value}"
+%{ endfor ~}
+
+setup_squid_proxy : ${setup_squid_proxy}
+squid_acl_localnet:
+  - acl localnet src ${squid_source_range}
+
+%{ if chrony_config ~}
+chronyconfig:
+  enabled: true
+  allow:
+    - ${chrony_allow_range}
+%{ if length(chrony_config_servers) > 0 ~}
+  content:
+%{ endif ~}
+%{ for item in chrony_config_servers ~}
+    - server: ${item.server}
+      options: ${item.options}
+%{ endfor ~}
+%{ endif ~}
+
+proxy_url: "${proxy_url}"
+no_proxy: "${no_proxy}"
+
+# This flag when true/yes will allow sharing same network for multiple dhcp servers
+dhcp_shared_network: true
+
+%{ if bastion_vip != "" }
+bastion_vip: "${bastion_vip}"
+%{ endif ~}
+
+cni_network_provider: ${cni_network_provider}
+cni_network_mtu: ${cni_network_mtu}
+
+%{ if luks_compliant && length(luks_config) > 0 ~}
+luks:
+ enabled: true
+ config:
+%{ for item in luks_config ~}
+    - thumbprint: ${item.thumbprint}
+      url: ${item.url}
+%{ endfor ~}
+ filesystem_device: ${luks_filesystem_device}
+ format: ${luks_format}
+ wipeFileSystem: "${luks_wipe_filesystem}"
+ device: ${luks_device}
+ label: ${luks_label}
+%{ if length(luks_options) > 0 ~}
+ options:
+%{ for item in luks_options ~}
+    - ${item}
+%{ endfor ~}
+%{ endif ~}
+ wipeVolume: "${luks_wipe_volume}"
+ name: ${luks_name}
+%{ endif ~}

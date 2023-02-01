@@ -1,0 +1,72 @@
+---
+disk: vda
+helper:
+  name: "helper"
+  ipaddr: "${bastion_ip}"
+dns:
+  domain: "${cluster_domain}"
+  clusterid: "${cluster_id}"
+  forwarder1: "${forwarder1}"
+%{ if forwarder2 != "" ~}
+  forwarder2: "${forwarder2}"
+%{ endif ~}
+dhcp:
+  router: "${gateway_ip}"
+  bcast: "${broadcast}"
+  netmask: "${netmask}"
+  ipid: "${ipid}"
+  netmaskid: "${netmask}"
+  poolstart: "${pool.start}"
+  poolend: "${pool.end}"
+bootstrap:
+  name: "${bootstrap_info.name}"
+  ipaddr: "${bootstrap_info.ip}"
+  macaddr: "${bootstrap_info.mac}"
+masters:
+%{ for m in master_info ~}
+  - name: "${m.name}"
+    ipaddr: "${m.ip}"
+    macaddr: "${m.mac}"
+%{ endfor ~}
+%{ if length(worker_info) > 0 }
+workers:
+%{ for w in worker_info ~}
+  - name: "${w.name}"
+    ipaddr: "${w.ip}"
+    macaddr: "${w.mac}"
+%{ endfor ~}
+%{ endif }
+chronyconfig:
+  enabled: ${chrony_config}
+  content:
+%{ for item in chrony_config_servers ~}
+    - server: ${item.server}
+      options: ${lookup(item, "options", "iburst")}
+%{ endfor ~}
+    - server: "${bastion_ip}"
+      options: iburst
+
+ppc64le: true
+ssh_gen_key: false
+
+ocp_client: "${client_tarball}"
+ocp_installer: "${install_tarball}"
+
+# Pointing it to local files since it is not required atm
+ocp_bios: "file:///dev/null"
+ocp_initramfs: "file:///dev/null"
+ocp_install_kernel: "file:///dev/null"
+
+%{ if local_registry.enable_local_registry }
+setup_registry:
+  deploy: true
+  autosync_registry: true
+  registry_image: "${local_registry.registry_image}"
+  local_repo: "${local_registry.ocp_release_repo}"
+  product_repo: "openshift-release-dev"
+  release_name: "ocp-release"
+  release_tag: "${local_registry.ocp_release_tag}"
+%{ endif }
+
+# This is required for latest helpernode. TODO: Remove when https://github.com/RedHatOfficial/ocp4-helpernode/pull/140 is merged
+helm_source: "https://get.helm.sh/helm-v3.4.0-linux-ppc64le.tar.gz"

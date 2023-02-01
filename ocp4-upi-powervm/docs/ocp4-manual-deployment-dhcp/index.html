@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>Ocp4 manual deployment dhcp - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Ocp4 manual deployment dhcp";
+    var mkdocs_page_input_path = "ocp4-upi-powervm/docs/ocp4-manual-deployment-dhcp.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Ocp4 manual deployment dhcp</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="create-masterworkerbootstrap-nodes"><strong>Create Master/Worker/Bootstrap Nodes</strong></h2>
+<p>Create the below PowerVM LPARS with empty disk volume attached (refer the documentation <a href="https://docs.openshift.com/container-platform/4.3/installing/installing_ibm_power/installing-ibm-power.html#minimum-resource-requirements_installing-ibm-power">link</a> for resource requirements) and note the MAC ID for each of the LPARs.</p>
+<ul>
+<li>bootstrap - 1</li>
+<li>master  - 3</li>
+<li>worker - 2</li>
+</ul>
+<h2 id="create-and-setup-bastion-node"><strong>Create and Setup Bastion Node</strong></h2>
+<ul>
+<li>Create RHEL 8.1 LPAR</li>
+<li>Login to the RHEL 8.1 LPAR and clone the OCP4 <a href="https://github.com/RedHatOfficial/ocp4-helpernode">helpernode</a> repo</li>
+<li>Use the following vars.yaml as a template and change the IP, network and related details according to your environment.</li>
+</ul>
+<pre><code>---
+disk: sda
+helper:
+  name: &quot;helper&quot;
+  ipaddr: &quot;192.168.7.77&quot;
+dns:
+  domain: &quot;example.com&quot;
+  clusterid: &quot;ocp4&quot;
+  forwarder1: &quot;8.8.8.8&quot;
+  forwarder2: &quot;8.8.4.4&quot;
+dhcp:
+  router: &quot;192.168.7.1&quot;
+  bcast: &quot;192.168.7.255&quot;
+  netmask: &quot;255.255.255.0&quot;
+  poolstart: &quot;192.168.7.10&quot;
+  poolend: &quot;192.168.7.30&quot;
+  ipid: &quot;192.168.7.0&quot;
+  netmaskid: &quot;255.255.255.0&quot;
+bootstrap:
+  name: &quot;bootstrap&quot;
+  ipaddr: &quot;192.168.7.20&quot;
+  macaddr: &quot;52:54:00:60:72:67&quot;
+masters:
+  - name: &quot;master0&quot;
+    ipaddr: &quot;192.168.7.21&quot;
+    macaddr: &quot;52:54:00:e7:9d:67&quot;
+  - name: &quot;master1&quot;
+    ipaddr: &quot;192.168.7.22&quot;
+    macaddr: &quot;52:54:00:80:16:23&quot;
+  - name: &quot;master2&quot;
+    ipaddr: &quot;192.168.7.23&quot;
+    macaddr: &quot;52:54:00:d5:1c:39&quot;
+workers:
+  - name: &quot;worker0&quot;
+    ipaddr: &quot;192.168.7.11&quot;
+    macaddr: &quot;52:54:00:f4:26:a1&quot;
+  - name: &quot;worker1&quot;
+    ipaddr: &quot;192.168.7.12&quot;
+    macaddr: &quot;52:54:00:82:90:00&quot;
+
+ppc64le: true
+ocp_bios: &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/dependencies/rhcos/4.4/latest/rhcos-4.4.9-ppc64le-metal.ppc64le.raw.gz&quot;
+ocp_initramfs: &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/dependencies/rhcos/4.4/latest/rhcos-4.4.9-ppc64le-installer-initramfs.ppc64le.img&quot;
+ocp_install_kernel: &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/dependencies/rhcos/4.4/latest/rhcos-4.4.9-ppc64le-installer-kernel-ppc64le&quot;
+ocp_client: &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/stable-4.4/openshift-client-linux.tar.gz&quot;
+ocp_installer: &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/stable-4.4/openshift-install-linux.tar.gz&quot;
+</code></pre>
+<ul>
+<li>Run the playbook</li>
+</ul>
+<pre><code>ansible-playbook -e @vars.yaml tasks/main.yml
+</code></pre>
+<ul>
+<li>Create ignition configs</li>
+</ul>
+<pre><code>mkdir ~/ocp4
+cd ~/ocp4
+</code></pre>
+<p>Create a place to store your pull-secret</p>
+<pre><code>mkdir -p ~/.openshift
+</code></pre>
+<p>Visit try.openshift.com and select "Bare Metal". Download your pull secret and save it under ~/.openshift/pull-secret</p>
+<pre><code># ls -1 ~/.openshift/pull-secret
+/root/.openshift/pull-secret
+</code></pre>
+<p>This playbook creates an ssh key for you; it's under <code>~/.ssh/helper_rsa</code>. You can use this key or create/user another one if you wish.</p>
+<pre><code># ls -1 ~/.ssh/helper_rsa
+/root/.ssh/helper_rsa
+</code></pre>
+<p><strong>Note</strong> - If you want you use your own ssh key, please modify <code>~/.ssh/config</code> to reference your key instead of the one deployed by the playbook</p>
+<p>Next, create an <code>install-config.yaml</code> file.</p>
+<p><strong>Note</strong> - Make sure you update if your filenames or paths are different.</p>
+<pre><code>cat &lt;&lt;EOF &gt; install-config.yaml
+apiVersion: v1
+baseDomain: example.com
+compute:
+- hyperthreading: Enabled
+  name: worker
+  replicas: 0
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  replicas: 3
+metadata:
+  name: ocp4
+networking:
+  clusterNetworks:
+  - cidr: 10.254.0.0/16
+    hostPrefix: 24
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+pullSecret: '$(&lt; ~/.openshift/pull-secret)'
+sshKey: '$(&lt; ~/.ssh/helper_rsa.pub)'
+EOF
+</code></pre>
+<p>Create the installation manifests</p>
+<pre><code>openshift-install create manifests
+</code></pre>
+<p>Edit the <code>manifests/cluster-scheduler-02-config.yml</code> Kubernetes manifest file to prevent Pods from being scheduled on the control plane machines by setting <code>mastersSchedulable</code> to <code>false</code>.</p>
+<pre><code>$ sed -i 's/mastersSchedulable: true/mastersSchedulable: false/g' manifests/cluster-scheduler-02-config.yml
+</code></pre>
+<p>It should look something like this after you edit it.</p>
+<pre><code>$ cat manifests/cluster-scheduler-02-config.yml
+apiVersion: config.openshift.io/v1
+kind: Scheduler
+metadata:
+  creationTimestamp: null
+  name: cluster
+spec:
+  mastersSchedulable: false
+  policy:
+    name: &quot;&quot;
+status: {}
+</code></pre>
+<p>Next, generate the ignition configs</p>
+<pre><code>openshift-install create ignition-configs
+</code></pre>
+<p>Finally, copy the ignition files in the ignition directory for the websever</p>
+<pre><code>cp ~/ocp4/*.ign /var/www/html/ignition/
+restorecon -vR /var/www/html/
+chmod o+r /var/www/html/ignition/*.ign
+</code></pre>
+<h2 id="boot-the-lpars"><strong>Boot the LPARs</strong></h2>
+<p>Boot the LPARs in the following order and ensure the LPARs perform DHCP boot</p>
+<ol>
+<li>Bootstrap</li>
+<li>Masters</li>
+<li>Workers</li>
+</ol>
+<h2 id="wait-for-install"><strong>Wait for Install</strong></h2>
+<pre><code>openshift-install wait-for bootstrap-complete --log-level debug
+</code></pre>
+<h2 id="finish-install"><strong>Finish Install</strong></h2>
+<p>First, login to your cluster</p>
+<pre><code>export KUBECONFIG=/root/ocp4/auth/kubeconfig
+</code></pre>
+<p>Your install may be waiting for worker nodes to get approved.
+Normally it's automated. However, sometimes this needs to be done manually. Check pending CSRs with the following command.</p>
+<pre><code>oc get csr
+</code></pre>
+<p>You can approve all pending CSRs in "one shot" with the following command</p>
+<pre><code>oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{&quot;\n&quot;}}{{end}}{{end}}' | xargs oc adm certificate approve
+</code></pre>
+<p>You may have to run the command multiple times depending on how many workers you have and in what order they come in. Keep a watch on the CSRs by running the following command</p>
+<pre><code>watch oc get csr
+</code></pre>
+<p>Set the registry for your cluster</p>
+<p>First, you have to set the <code>managementState</code> to <code>Managed</code> for your cluster</p>
+<pre><code>oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{&quot;spec&quot;:{&quot;managementState&quot;:&quot;Managed&quot;}}'
+</code></pre>
+<p>For PoCs, using emptyDir is ok (to use PVs follow this doc)</p>
+<pre><code>oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{&quot;spec&quot;:{&quot;storage&quot;:{&quot;emptyDir&quot;:{}}}}'
+</code></pre>
+<p>If you need to expose the registry, run this command</p>
+<pre><code>oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{&quot;spec&quot;:{&quot;defaultRoute&quot;:true}}'
+</code></pre>
+<p><strong>Note</strong> - You can watch the operators running with <code>oc get clusteroperators</code></p>
+<h2 id="login-to-the-web-console"><strong>Login to the web console</strong></h2>
+<p>The OpenShift 4 web console will be running at <code>https://console-openshift-console.apps.{{ dns.clusterid }}.{{ dns.domain }} (e.g. https://console-openshift-console.apps.ocp4.example.com)</code></p>
+<ul>
+<li>Username: kubeadmin</li>
+<li>Password: the output of <code>cat /root/ocp4/auth/kubeadmin-password</code></li>
+</ul>
+<p><strong>Note</strong> - You'll need to update your <code>/etc/hosts</code> settings if using private dhcp server running on the bastion node</p>
+<p>References:
+- <a href="https://github.com/RedHatOfficial/ocp4-helpernode/blob/master/docs/quickstart.md">Quickstart Guide</a>
+- <a href="https://github.com/RedHatOfficial/ocp4-helpernode/blob/master/docs/quickstart-ppc64le.md">Power QuickStart Guide</a></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

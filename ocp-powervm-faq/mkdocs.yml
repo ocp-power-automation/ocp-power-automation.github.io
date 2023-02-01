@@ -1,0 +1,9 @@
+site_name: powervs-faq
+theme:
+  name: mkdocs
+  nav_style: dark
+  navigation_depth: 3
+  favicon: img/favicon.ico
+nav:
+  - FAQ: powervs-faq.md
+copyright: © Copyright IBM Corp. 2021

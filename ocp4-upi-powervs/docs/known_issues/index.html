@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>Known Issues - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Known Issues";
+    var mkdocs_page_input_path = "ocp4-upi-powervs/docs/known_issues.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Known Issues</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="known-issues">Known Issues</h1>
+<p>This page lists the known issues and potential next steps when deploying OpenShift (OCP) in Power Systems Virtual Server (PowerVS)</p>
+<h2 id="terraform-apply-returns-the-following-error">Terraform apply returns the following error</h2>
+<ul>
+<li>
+<p><strong>Error</strong>:</p>
+<blockquote>
+<p>timeout - last error: Error connecting to bastion: dial tcp 161.156.139.82:22: connect: operation timed out</p>
+</blockquote>
+</li>
+<li>
+<p><strong>Cause</strong>: The public network attached to bastion is not reachable.</p>
+</li>
+</ul>
+<p>Ping to the public/external IP of bastion node (eg. 161.156.139.82) will not return any response</p>
+<ul>
+<li><strong>Workaround</strong>: Re-run TF again and if it doesn't help, destroy the TF resources and re-run.</li>
+</ul>
+<p>If it doesn't work, then please open a support case with IBM Cloud to fix issue with reachability of public IP for PowerVS instance.</p>
+<h2 id="rhcos-instances-in-dashboard-shows-warning-status">RHCOS instances in dashboard shows \"Warning\" Status</h2>
+<ul>
+<li>
+<p><strong>Cause</strong>: This is due to RSCT daemon not being available for RHCOS</p>
+</li>
+<li>
+<p><strong>Workaround</strong>: None</p>
+</li>
+</ul>
+<p>You can ignore this. This will be fixed soon.</p>
+<h2 id="terraform-apply-fails-with-instance-is-not-reachable-error">Terraform apply fails with instance is not reachable error</h2>
+<ul>
+<li>
+<p><strong>Cause</strong>: Sometimes the instances don't boot and and accessing the instance console from IBM Cloud dashboard shows  <em>grub rescue</em></p>
+</li>
+<li>
+<p><strong>Workaround</strong>: Rebooting the instance helps. If still facing the same issue, try destroying the TF resources and re-running the deployment</p>
+</li>
+</ul>
+<h2 id="terraform-apply-fails-with-instance-is-not-reachable-error_1">Terraform apply fails with instance is not reachable error</h2>
+<ul>
+<li>
+<p><strong>Cause</strong>:  Sometimes the instances don't boot and and accessing the instance console from IBM Cloud dashboard shows  <em>connect:   network is unreachable</em></p>
+</li>
+<li>
+<p><strong>Cause</strong>: Unknown</p>
+</li>
+<li>
+<p><strong>Workaround</strong>: Rebooting the instance helps.</p>
+</li>
+</ul>
+<h2 id="terraform-provisioning-fails-with-the-following-error">Terraform provisioning fails with the following error</h2>
+<ul>
+<li><strong>Error</strong>:<blockquote>
+<p>Failed to get the instance Get https://eu-de.power-iaas.cloud.ibm.com/pcloud/v1/cloud-instances/d239797b-7b2e-
+4790-a29d-439567556c83/pvm-instances/7d836f7d-8f21-4bef-9e10-ae6d8c2167a1: context deadline exceeded
+on modules/4_nodes/nodes.tf line 92, in resource "ibm_pi_instance" "master":
+92: resource "ibm_pi_instance" "master" {</p>
+</blockquote>
+</li>
+</ul>
+<p>Reapply will also fail</p>
+<blockquote>
+<p>**module.nodes.ibm_pi_instance.master[0]: Creating...
+Error: Failed to provision {"description":"bad request: invalid name server name already exists for cloud-     instance","error":"bad request"}
+on modules/4_nodes/nodes.tf line 92, in resource "ibm_pi_instance" "master":
+92: resource "ibm_pi_instance" "master" {</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>Cause</strong>: IBM Cloud API failed but resource got created and TF doesn't know that the resource got created.</p>
+</li>
+<li>
+<p><strong>Workaround</strong>: Manually delete the resource from the dashboard and re-apply</p>
+</li>
+</ul>
+<h2 id="terraform-apply-fails-with-these-errors">Terraform apply fails with these errors</h2>
+<ul>
+<li><strong>Error</strong>:</li>
+<li>
+<blockquote>
+<p>module.install.null_resource.install (remote-exec): information. module.install.null_resource.install (remote-exec): changed: [192.168.25.12] =&gt; {"ansible_facts": {"discovered_interpreter_python": "/usr/libexec/platform-python"}, "changed": true, "cmd": "if lsmod|grep -q 'ibmveth'; then\n  sudo sysctl -w net.ipv4.route.min_pmtu=1450;\n  sudo sysctl -w net.ipv4.ip_no_pmtu_disc=1;\n  echo 'net.ipv4.route.min_pmtu = 1450' | sudo tee --append /etc/sysctl.d/88-sysctl.conf &gt; /dev/null;\n  echo 'net.ipv4.ip_no_pmtu_disc = 1' | sudo tee --append /etc/sysctl.d/88-sysctl.conf &gt; /dev/null;\nfi\n", "delta": "0:00:00.078644", "end": "2020-09-18 16:25:46.414601", "rc": 0, "start": "2020-09-18 16:25:46.335957", "stderr": "", "stderr_lines": [], "stdout": "net.ipv4.route.min_pmtu = 1450\nnet.ipv4.ip_no_pmtu_disc = 1", "stdout_lines": ["net.ipv4.route.min_pmtu = 1450", "net.ipv4.ip_no_pmtu_disc = 1"]}  </p>
+<pre><code>&gt; module.install.null_resource.install (remote-exec): NO MORE HOSTS LEFT *************************************************************
+
+&gt; module.install.null_resource.install (remote-exec): PLAY RECAP *********************************************************************   
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.105             : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.12              : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.121             : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.15              : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.235             : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.39              : ok=1    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.5               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.82              : ok=28   changed=22   unreachable=0    failed=0    skipped=11   rescued=0    ignored=0
+</code></pre>
+</blockquote>
+</li>
+<li>
+<blockquote>
+<p>module.install.null_resource.config (remote-exec): TASK [Downloading OCP4 Installer] <strong><em>*</em></strong><strong><em>*</em></strong><strong><em>*</em></strong><strong><em>*</em></strong><strong><em>*</em></strong><strong><em>*</em></strong>****<br />
+    &gt; module.install.null_resource.config: Still creating... [1m40s elapsed]
+    &gt; module.install.null_resource.config (remote-exec): fatal: [localhost]: FAILED! =&gt; {"changed": false, "dest": "/usr/local/src/openshift-install-linux.tar.gz", "elapsed": 10, "msg": "Request failed: <urlopen error _ssl.c:880: The handshake operation timed out>", "url": "https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/4.5.4/openshift-install-linux.tar.gz"}</p>
+</blockquote>
+</li>
+<li>
+<blockquote>
+<p>module.install.null_resource.install (remote-exec): fatal: [192.168.25.167]: UNREACHABLE! =&gt; {"changed": false, "msg": "Failed to connect to the host via ssh: ssh: connect to host 192.168.25.167 port 22: Connection timed out", "unreachable": true}</p>
+<pre><code>&gt; module.install.null_resource.install (remote-exec): NO MORE HOSTS LEFT *************************************************************
+
+&gt; module.install.null_resource.install (remote-exec): PLAY RECAP *********************************************************************  
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.107             : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.165             : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.167             : ok=1    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.212             : ok=28   changed=22   unreachable=0    failed=0    skipped=11   rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.64              : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.76              : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.78              : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+&gt; module.install.null_resource.install (remote-exec): 192.168.25.81              : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+</code></pre>
+</blockquote>
+</li>
+<li>
+<p><strong>Workaround</strong>: Re-run the <code>terraform apply</code> command.</p>
+</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>How to use var.tfvars - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "How to use var.tfvars";
+    var mkdocs_page_input_path = "ocp4-upi-powervm/docs/var.tfvars-doc.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>How to use var.tfvars</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="how-to-use-vartfvars">How to use var.tfvars</h1>
+<ul>
+<li><a href="#how-to-use-vartfvars">How to use var.tfvars</a></li>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#powervc-details">PowerVC Details</a></li>
+<li><a href="#openshift-cluster-details">OpenShift Cluster Details</a></li>
+<li><a href="#openshift-installation-details">OpenShift Installation Details</a></li>
+<li><a href="#misc-customizations">Misc Customizations</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This guide gives an overview of the various terraform variables that are used for the deployment.
+The default values are set in <a href="../../variables.tf">variables.tf</a></p>
+<h3 id="powervc-details">PowerVC Details</h3>
+<p>These set of variables specify the PowerVC details.</p>
+<pre><code>auth_url                    = &quot;&lt;https://&lt;HOSTNAME&gt;:5000/v3/&gt;&quot;
+user_name                   = &quot;&lt;powervc-login-user-name&gt;&quot;
+password                    = &quot;&lt;powervc-login-user-password&gt;&quot;
+tenant_name                 = &quot;&lt;tenant_name&gt;&quot;
+domain_name                 = &quot;Default&quot;
+</code></pre>
+<p>This variable specifies the network that will be used by the VMs</p>
+<pre><code>network_name                = &quot;&lt;network_name&gt;&quot;
+</code></pre>
+<p>This variable specifies the availability zone (PowerVC Host Group) in which to create the VMs. Leave it empty to use the "default" availability zone.</p>
+<pre><code>openstack_availability_zone = &quot;&quot;
+</code></pre>
+<h3 id="openshift-cluster-details">OpenShift Cluster Details</h3>
+<p>These set of variables specify the cluster capacity.</p>
+<pre><code>bastion                     = {instance_type    = &quot;&lt;bastion-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhel&gt;&quot;,  &quot;count&quot;   = 1}
+bootstrap                   = {instance_type    = &quot;&lt;bootstrap-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;,  &quot;count&quot;   = 1}
+master                      = {instance_type    = &quot;&lt;master-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;,  &quot;count&quot;   = 3}
+worker                      = {instance_type    = &quot;&lt;worker-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;,  &quot;count&quot;   = 2}
+</code></pre>
+<p><code>instance_type</code> is the compute template to be used and <code>image_id</code> is the image UUID. <code>count</code> specifies the number of VMs that should be created for each type.</p>
+<p>To enable high availability (HA) for cluster services running on the bastion set the bastion <code>count</code> value to 2. Note that in case of HA, the automation will not setup NFS storage. <code>count</code> of 1 for bastion implies the default non-HA bastion setup.</p>
+<p>You can optionally set worker <code>count</code> value to 0 in which case all the cluster pods will be running on the master/supervisor nodes. 
+Ensure you use proper sizing for master/supervisor nodes to avoid resource starvation for containers.</p>
+<p><code>availability_zone</code> is an optional attribute for bastion, bootstrap, master and worker. If it is specified, the VM will be created in the specified <code>availability_zone</code>, otherwise value of <code>openstack_availability_zone</code> will be used. </p>
+<pre><code>bastion                     = {instance_type    = &quot;&lt;bastion-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhel&gt;&quot;,  &quot;count&quot;   = 1}
+bootstrap                   = {instance_type    = &quot;&lt;bootstrap-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;, availability_zone = &quot;&quot;, &quot;count&quot;   = 1}
+master                      = {instance_type    = &quot;&lt;master-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;, availability_zone = &quot;master-zone&quot;,  &quot;count&quot;   = 3}
+worker                      = {instance_type    = &quot;&lt;worker-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;, availability_zone = &quot;worker-zone&quot;,  &quot;count&quot;   = 2}
+</code></pre>
+<p>Above will create the bastion in <code>openstack_availability_zone</code>, bootstrap in default availability zone, masters in <code>master-zone</code>, and workers in <code>worker-zone</code>.</p>
+<p>To set a pre-defined IPv4 address for the bastion node, make use of the optional <code>fixed_ip_v4</code> in bastion variable as shown below. Ensure this address is within the given network subnet range and not already in use.</p>
+<pre><code>bastion                     = {instance_type    = &quot;&lt;bastion-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhel&gt;&quot;,  &quot;count&quot;   = 1,  fixed_ip_v4 = &quot;&lt;IPv4 address&gt;&quot;}
+</code></pre>
+<p>For bastion HA with pre-defined IPs, here the <code>fixed_ip_v4</code> will be the VIP for bastions:</p>
+<pre><code>bastion                     = {instance_type    = &quot;&lt;bastion-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhel&gt;&quot;,  &quot;count&quot;   = 2,  fixed_ip_v4 = &quot;&lt;IPv4 address&gt;&quot;, fixed_ips = [&quot;&lt;IPv4 address&gt;&quot;, &quot;&lt;IPv4 address&gt;&quot;]}
+</code></pre>
+<p>To use predefined IPs for bootstrap, master and worker node, use the optional <code>fixed_ips</code> in bootstrap, master and worker variables, number of IPs have to match the count number as shown below:</p>
+<pre><code>bootstrap                   = {instance_type    = &quot;&lt;bootstrap-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;,  &quot;count&quot;   = 1, fixed_ips = [&quot;&lt;IPv4 address&gt;&quot;]}
+master                      = {instance_type    = &quot;&lt;master-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;,  &quot;count&quot;   = 3, fixed_ips = [&quot;&lt;IPv4 address&gt;&quot;, &quot;&lt;IPv4 address&gt;&quot;, &quot;&lt;IPv4 address&gt;&quot;]}
+worker                      = {instance_type    = &quot;&lt;worker-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;,  &quot;count&quot;   = 2, fixed_ips = [&quot;&lt;IPv4 address&gt;&quot;, &quot;&lt;IPv4 address&gt;&quot;]}
+</code></pre>
+<p>To attach additional volumes to master or worker nodes, set the optional <code>data_volume_count</code> key to the number of volumes that is to be attached and the <code>data_volume_size</code> to the size (in GB) for each volume.</p>
+<pre><code>master                      = {instance_type    = &quot;&lt;master-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;, &quot;count&quot;   = 3, data_volume_count  = 0, data_volume_size  = 100}
+worker                      = {instance_type    = &quot;&lt;worker-compute-template&gt;&quot;, image_id    = &quot;&lt;image-uuid-rhcos&gt;&quot;, &quot;count&quot;   = 2, data_volume_count  = 0, data_volume_size  = 100}
+</code></pre>
+<p>These set of variables specify the username and the SSH key to be used for accessing the bastion node.</p>
+<pre><code>rhel_username               = &quot;root&quot;  #Set it to an appropriate username for non-root user access
+public_key_file             = &quot;data/id_rsa.pub&quot;
+private_key_file            = &quot;data/id_rsa&quot;
+</code></pre>
+<p>rhel_username is set to root. rhel_username can be set to an appropriate username having superuser privileges with no password prompt.
+Please note that only OpenSSH formatted keys are supported. Refer to the following links for instructions on creating SSH key based on your platform.
+- Windows 10 - https://phoenixnap.com/kb/generate-ssh-key-windows-10
+- Mac OSX - https://www.techrepublic.com/article/how-to-generate-ssh-keys-on-macos-mojave/
+- Linux - https://www.siteground.com/kb/generate_ssh_key_in_linux/</p>
+<p>Create the SSH key-pair and keep it under the <code>data</code> directory</p>
+<p>These set of variables specify the RHEL subscription details, RHEL subscription supports two methods: one is using username and password, the other is using activation key.
+This is sensitive data, and if you don't want to save it on disk, use environment variables <code>RHEL_SUBS_USERNAME</code> and <code>RHEL_SUBS_PASSWORD</code> and 
+pass them to <code>terraform apply</code> command as shown in the <a href="../quickstart/#setup-terraform-variables">Quickstart guide</a>.</p>
+<pre><code>rhel_subscription_username  = &quot;user@test.com&quot;
+rhel_subscription_password  = &quot;mypassword&quot;
+</code></pre>
+<p>Or define following variables to use activation key for RHEL subscription:</p>
+<pre><code>rhel_subscription_org = &quot;org-id&quot;
+rhel_subscription_activationkey = &quot;activation-key&quot;
+</code></pre>
+<h3 id="openshift-installation-details">OpenShift Installation Details</h3>
+<p>These variables specify the URL for the OpenShift installer and client binaries.
+Change the URL to the specific pre-release version that you want to install on PowerVS.
+Reference link - <code>https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview</code></p>
+<pre><code>openshift_install_tarball   = &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest/openshift-install-linux.tar.gz&quot;
+openshift_client_tarball    = &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest/openshift-client-linux.tar.gz&quot;
+</code></pre>
+<p>This variable specifies the OpenShift pull secret. This is available from the following link -  https://cloud.redhat.com/openshift/install/power/user-provisioned
+Download the secret and copy it to <code>data/pull-secret.txt</code>.</p>
+<pre><code>pull_secret_file            = &quot;data/pull-secret.txt&quot;
+</code></pre>
+<p>These variables specifies the OpenShift cluster domain details.
+Edit it as per your requirements.</p>
+<pre><code>cluster_domain              = &quot;ibm.com&quot;
+cluster_id_prefix           = &quot;test-ocp&quot;
+cluster_id                  = &quot;&quot;
+</code></pre>
+<p>Set the <code>cluster_domain</code> to <code>nip.io</code>, <code>xip.io</code> or <code>sslip.io</code> if you prefer using online wildcard domains.
+Default is <code>ibm.com</code>.
+The <code>cluster_id_prefix</code> should not be more than 8 characters. Nodes are pre-fixed with this value.
+Default value is <code>test-ocp</code>
+If <code>cluster_if_prefix</code> is not set, the <code>cluster_id</code> will be used only without prefix.</p>
+<p>A random value will be used for <code>cluster_id</code> if not set.
+The total length of <code>cluster_id_prefix</code>.<code>cluster_id</code> should not exceed 14 characters.</p>
+<h3 id="fips-variable-for-openshift-deployment">FIPS Variable for OpenShift deployment</h3>
+<p>These variables will be used for deploying OCP in FIPS mode.
+Change the values as per your requirement.</p>
+<pre><code>fips_compliant      = false
+</code></pre>
+<h3 id="misc-customizations">Misc Customizations</h3>
+<p>These variables provides miscellaneous customizations. For common usage scenarios these are not required and should be left unchanged.</p>
+<p>The following variables are used to define the IP address for the preconfigured external DNS and the Load-balancer </p>
+<pre><code>lb_ipaddr                       = &quot;&quot;
+ext_dns                         = &quot;&quot;
+</code></pre>
+<p>The following variable is used to set the network adapter type for the VMs. By default the VMs will use SEA. If SRIOV is required then uncomment the variable</p>
+<pre><code>network_type                = &quot;SRIOV&quot;
+</code></pre>
+<p>The following variable is used to define the amount of SR-IOV Virtual Functions used for VNIC failover of the network adapter for the VMs. By default the VMs will use 1, which defines <code>no VNIC failover</code>. Any setting higher then 1 creates additional virtual functions and configures them in a VNIC failover setup. <code>Be aware of the fact, that RHCOS and some Linux releases might not handle VNIC failover with more then 2 SR-IOV Virtual Functions properly. The recommended value is 2 for VNIC failover.</code>
+Valid options are: Any number supported for VNIC failover from 1 to 6</p>
+<pre><code>sriov_vnic_failover_vfs                = 1
+</code></pre>
+<p>The following variable is used to define the capacity of SR-IOV Logical Ports of the 1st network adapter for the VMs. By default the VMs will use 2%.
+Valid options are: Any number which can be devided by 2 and results in an integer. 100% = 1.0; 80% = 0.80; 60% = 0.60; etc</p>
+<pre><code>sriov_capacity                = 0.02
+</code></pre>
+<p>The following variable is used to specify the PowerVC <a href="https://www.ibm.com/support/knowledgecenter/SSVSPA_1.4.4/com.ibm.powervc.cloud.help.doc/powervc_storage_connectivity_groups_cloud.html">Storage Connectivity Group</a> (SCG). Empty value will use the default SCG</p>
+<pre><code>scg_id                      = &quot;&quot;
+</code></pre>
+<p>The following variables can be used for disconnected install by using a local mirror registry on the bastion node.</p>
+<pre><code>enable_local_registry      = false  #Set to true to enable usage of local registry for restricted network install.
+local_registry_image       = &quot;docker.io/ibmcom/registry-ppc64le:2.6.2.5&quot;
+ocp_release_tag            = &quot;4.4.9-ppc64le&quot;
+ocp_release_name           = &quot;ocp-release&quot;
+</code></pre>
+<p>This variable can be used for trying out custom OpenShift install image for development use.</p>
+<pre><code>release_image_override     = &quot;&quot;
+</code></pre>
+<p>These variables specify the ansible playbooks that are used for OpenShift install and post-install customizations.</p>
+<pre><code>helpernode_repo            = &quot;https://github.com/RedHatOfficial/ocp4-helpernode&quot;
+helpernode_tag             = &quot;5eab3db53976bb16be582f2edc2de02f7510050d&quot;
+install_playbook_repo      = &quot;https://github.com/ocp-power-automation/ocp4-playbooks&quot;
+install_playbook_tag       = &quot;02a598faa332aa2c3d53e8edd0e840440ff74bd5&quot;
+</code></pre>
+<p>This variable specify the MTU value for the private network interface on RHEL and RHCOS nodes. The CNI network will have <private_network_mtu> - 50 for OpenshiftSDN and <private_network_mtu> - 100 for OVNKubernetes network provider.</p>
+<pre><code>private_network_mtu         = 1450
+</code></pre>
+<p>These variables can be used when debugging ansible playbooks</p>
+<pre><code>installer_log_level         = &quot;info&quot;
+ansible_extra_options       = &quot;-v&quot;
+</code></pre>
+<p>This variable specifies the external DNS servers to forward DNS queries that cannot be resolved locally.</p>
+<pre><code>dns_forwarders              = &quot;1.1.1.1; 9.9.9.9&quot;
+</code></pre>
+<p>List of <a href="https://docs.openshift.com/container-platform/4.8/installing/install_config/installing-customizing.html#installation-special-config-kargs_installing-customizing">day-1 kernel arguments</a> for the cluster nodes.
+To add kernel arguments to master or worker nodes, using MachineConfig object and inject that object into the set of manifest files used by Ignition during cluster setup.</p>
+<pre><code>rhcos_pre_kernel_options        = []
+</code></pre>
+<ul>
+<li>Example 1
+  <code>rhcos_pre_kernel_options   = ["rd.multipath=default","root=/dev/disk/by-label/dm-mpath-root"]</code></li>
+</ul>
+<p>List of <a href="https://docs.openshift.com/container-platform/4.4/nodes/nodes/nodes-nodes-working.html#nodes-nodes-kernel-arguments_nodes-nodes-working">kernel arguments</a> for the cluster nodes.
+Note that this will be applied after the cluster is installed and all the nodes are in <code>Ready</code> status.</p>
+<pre><code>rhcos_kernel_options        = []
+</code></pre>
+<ul>
+<li>Example 1
+  <code>rhcos_kernel_options      = ["slub_max_order=0","loglevel=7"]</code></li>
+</ul>
+<p>These are NTP specific variables that are used for time-synchronization in the OpenShift cluster.</p>
+<pre><code>chrony_config               = true
+chrony_config_servers       = [ {server = &quot;0.centos.pool.ntp.org&quot;, options = &quot;iburst&quot;}, {server = &quot;1.centos.pool.ntp.org&quot;, options = &quot;iburst&quot;} ]
+</code></pre>
+<p>These set of variables are specific for cluster wide proxy configuration.
+Public internet access for the OpenShift cluster nodes is via Squid proxy deployed on the bastion.</p>
+<pre><code>setup_squid_proxy           = false
+</code></pre>
+<p>If you have a separate proxy, and don't want to set the Squid proxy on bastion then use the following variables.</p>
+<pre><code>setup_squid_proxy           = false
+proxy                       = {server = &quot;hostname_or_ip&quot;, port = &quot;3128&quot;, user = &quot;pxuser&quot;, password = &quot;pxpassword&quot;}
+</code></pre>
+<p>Except <code>server</code> all other attributes are optional. Default <code>port</code> is <code>3128</code> with unauthenticated access.</p>
+<p>The following variable allows using RAM disk for etcd. This is not meant for production use cases</p>
+<pre><code>mount_etcd_ramdisk          = false
+</code></pre>
+<p>These variables specify details about NFS storage that is setup by default on the bastion server.</p>
+<pre><code>storage_type                = &quot;nfs&quot;
+volume_size                 = &quot;300&quot; # Value in GB
+volume_storage_template     = &quot;&quot;
+</code></pre>
+<p>The following variables are specific to upgrading an existing installation.</p>
+<pre><code>upgrade_version            = &quot;&quot;
+upgrade_channel            = &quot;&quot;  #(stable-4.x, fast-4.x, candidate-4.x) eg. stable-4.5
+upgrade_image              = &quot;&quot;  #(e.g. `&quot;quay.io/openshift-release-dev/ocp-release-nightly@sha256:xxxxx&quot;`)
+upgrade_pause_time         = &quot;90&quot;
+upgrade_delay_time         = &quot;600&quot;
+</code></pre>
+<p>This variable is used to set the default Container Network Interface (CNI) network provider such as OpenShiftSDN or OVNKubernetes</p>
+<pre><code>cni_network_provider       = &quot;OpenshiftSDN&quot;
+cluster_network_cidr        = &quot;10.128.0.0/14&quot;
+cluster_network_hostprefix  = &quot;23&quot;
+service_network             = &quot;172.30.0.0/16&quot;
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

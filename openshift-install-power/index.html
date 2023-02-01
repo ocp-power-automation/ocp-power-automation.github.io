@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script";
+    var mkdocs_page_input_path = "openshift-install-power/README.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#install-openshift-on-powervs">Install OpenShift on PowerVS</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#introduction">Introduction</a></li>
+        
+            <li><a class="toctree-l3" href="#features">Features</a></li>
+        
+            <li><a class="toctree-l3" href="#supported-platforms">Supported Platforms</a></li>
+        
+            <li><a class="toctree-l3" href="#firewall-requirements">Firewall Requirements</a></li>
+        
+            <li><a class="toctree-l3" href="#usage">Usage</a></li>
+        
+            <li><a class="toctree-l3" href="#prerequisites">Prerequisites</a></li>
+        
+            <li><a class="toctree-l3" href="#quickstart">Quickstart</a></li>
+        
+            <li><a class="toctree-l3" href="#advanced-usage">Advanced Usage</a></li>
+        
+            <li><a class="toctree-l3" href="#tutorials">Tutorials</a></li>
+        
+            <li><a class="toctree-l3" href="#detailed-explanation-of-the-core-commands">Detailed Explanation of the Core Commands</a></li>
+        
+            <li><a class="toctree-l3" href="#contributing">Contributing</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="install-openshift-on-powervs">Install OpenShift on PowerVS</h1>
+<ul>
+<li><a href="#install-openshift-on-powervs">Install OpenShift on PowerVS</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#features">Features</a></li>
+<li><a href="#supported-platforms">Supported Platforms</a><ul>
+<li><a href="#macos">MacOS</a></li>
+<li><a href="#linux-x86_64ppc64le">Linux (x86_64/ppc64le)</a></li>
+<li><a href="#windows-10-64-bit">Windows 10 (64-bit)</a></li>
+</ul>
+</li>
+<li><a href="#firewall-requirements">Firewall Requirements</a></li>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#quickstart">Quickstart</a></li>
+<li><a href="#advanced-usage">Advanced Usage</a><ul>
+<li><a href="#different-openshift-versions">Different OpenShift Versions</a></li>
+<li><a href="#non-interactive-mode">Non-interactive mode</a></li>
+</ul>
+</li>
+<li><a href="#tutorials">Tutorials</a></li>
+<li><a href="#detailed-explanation-of-the-core-commands">Detailed Explanation of the Core Commands</a><ul>
+<li><a href="#setup">setup</a></li>
+<li><a href="#variables">variables</a></li>
+<li><a href="#create">create</a></li>
+<li><a href="#destroy">destroy</a></li>
+</ul>
+</li>
+<li><a href="#contributing">Contributing</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This project contains a bash script to help you deploy OpenShift Container Platform 4.X on <a href="https://www.ibm.com/cloud/power-virtual-server">IBM® Power Systems™ Virtual Server on IBM Cloud</a> (PowerVS). The Terraform code at <a href="https://github.com/ocp-power-automation/ocp4-upi-powervs/">ocp4-upi-powervs</a> is used for the deployment process.</p>
+<p>Ensure your PowerVS instance is prepped for deploying OpenShift Clusters. Please check this <a href="https://ocp-power-automation.github.io/ocp4-upi-powervs/docs/ocp_prereqs_powervs/">link</a> for more details</p>
+<p>Here is <a href="https://asciinema.org/a/380928">quick demo</a>.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Simple script based installer to deploy OpenShift (4.5 onwards) cluster on PowerVS leveraging Infrastructure as Code (IaC) pattern</li>
+<li>Supports multiple platforms including Linux(x86_64/ppc64le), Windows &amp; Mac OSX</li>
+<li>Sets up the latest IBM Cloud CLI with Power Virtual Servers plugin.</li>
+<li>Sets up the latest Terraform binary</li>
+<li>Provides interactive mode to populate required Terraform variables</li>
+<li>Abstract out the Terraform lifecycle management</li>
+</ul>
+<h2 id="supported-platforms">Supported Platforms</h2>
+<p>Only 64bit Operating Systems are supported by the script.</p>
+<p>The script requires <code>bash</code> shell and a package manager pre-configured.</p>
+<h3 id="macos">MacOS</h3>
+<p>Catalina (10.15) and above is required.</p>
+<p>The script uses <a href="https://brew.sh/">Homebrew</a> package manager to install required packages.</p>
+<h3 id="linux-x86_64ppc64le">Linux (x86_64/ppc64le)</h3>
+<p>RHEL8/CentOS8 and above or Ubuntu 16.04 and above is required.</p>
+<p>The script uses the default package manager (<code>yum/dnf/apt</code>) based on the distribution.</p>
+<h3 id="windows-10-64-bit">Windows 10 (64-bit)</h3>
+<p>The script can run on GitBash, Windows Subsystem for Linux and Cygwin terminals.</p>
+<p>If using Cygwin, then please ensure <code>curl</code> and <code>unzip</code> packages are installed. You will need to run the Cygwin setup again.</p>
+<p>Note: <strong>PowerShell is Unsupported</strong>.</p>
+<h2 id="firewall-requirements">Firewall Requirements</h2>
+<ol>
+<li>Ensure inbound access is allowed for the following TCP ports.
+This is only required when using a Cloud instance or a remote VM so that you can connect to it using SSH and run the installer</li>
+<li>22 (SSH)</li>
+<li>Ensure <strong>outbound</strong> access is allowed for the following TCP ports</li>
+<li>80 (HTTP)</li>
+<li>443 (HTTPS)</li>
+<li>6443 (OC CLI)</li>
+</ol>
+<h2 id="usage">Usage</h2>
+<ol>
+<li>Create an install directory where all the configurations, logs and data files will be stored.</li>
+</ol>
+<pre><code>$ mkdir ocp-install-dir &amp;&amp; cd ocp-install-dir
+</code></pre>
+<ol>
+<li>Download the script on your system and change the permission to execute.</li>
+</ol>
+<pre><code>$ curl -sL https://raw.githubusercontent.com/ocp-power-automation/openshift-install-power/main/openshift-install-powervs -o ./openshift-install-powervs
+$ chmod +x ./openshift-install-powervs
+</code></pre>
+<ol>
+<li>Run the script.</li>
+</ol>
+<pre><code>$ ./openshift-install-powervs
+
+Automation for deploying OpenShift 4.X on PowerVS
+
+Usage:
+  openshift-install-powervs [command] [&lt;args&gt; [&lt;value&gt;]]
+
+Available commands:
+  setup           Install all the required packages/binaries in current directory
+  variables       Interactive way to populate the variables file
+  create          Create an OpenShift cluster
+  destroy         Destroy an OpenShift cluster
+  output          Display the cluster information. Runs terraform output [NAME]
+  access-info     Display the access information of installed OpenShift cluster
+  help            Display this information
+
+Where &lt;args&gt;:
+  -var               Terraform variable to be passed to the create/destroy command
+  -var-file          Terraform variable file name in current directory. (By default using var.tfvars)
+  -flavor            Cluster compute template to use eg: small, medium, large
+  -force-destroy     Not ask for confirmation during destroy command
+  -ignore-os-checks  Ignore operating system related checks
+  -ignore-warnings   Warning messages will not be displayed. Should be specified first, before any other args.
+  -verbose           Enable verbose for terraform console messages
+  -all-images        List all the images available during variables prompt
+  -trace             Enable tracing of all executed commands
+  -version, -v       Display the script version
+
+Environment Variables:
+  IBMCLOUD_API_KEY    IBM Cloud API key
+  RELEASE_VER         OpenShift release version (Default: 4.12)
+  ARTIFACTS_VERSION   Tag or Branch name of ocp4-upi-powervs repository (Default: main)
+  RHEL_SUBS_PASSWORD  RHEL subscription password if not provided in variables
+  NO_OF_RETRY         Number of retries/attempts to run repeatable actions such as create (Default: 5)
+
+Submit issues at: https://github.com/ocp-power-automation/openshift-install-power/issues
+
+</code></pre>
+<p><strong>Using the Container Image</strong></p>
+<p>To use the images present in the <a href="https://quay.io/repository/powercloud/openshift-install-powervs?tab=tags">quay.io/powercloud</a> repository, run the following command.</p>
+<pre><code>docker run -it -e IBMCLOUD_API_KEY=&quot;&lt;key&gt;&quot; -v $(pwd):/data quay.io/powercloud/openshift-install-powervs:&lt;valid-tag&gt; create
+</code></pre>
+<p>OR</p>
+<pre><code>podman run -it -e IBMCLOUD_API_KEY=&quot;&lt;key&gt;&quot; -v $(pwd):/data quay.io/powercloud/openshift-install-powervs:&lt;valid-tag&gt; create
+</code></pre>
+<p>Tags provide information about the release version, ocp version or supported architecture.</p>
+<p>In case you need to build the openshift-install-powervs image, check out the following <a href="https://github.com/ocp-power-automation/openshift-install-power/blob/devel/docs/container.md">"Usage with Containers"</a> link</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p><strong>The script assumes PowerVS prerequisites for OpenShift are already in place.</strong></p>
+<p>In case you missed, here is the link to the <a href="https://github.com/ocp-power-automation/ocp4-upi-powervs/blob/main/docs/ocp_prereqs_powervs.md">prerequisites</a></p>
+<p>For running the script you need the following:
+1. <strong>IBM Cloud API key</strong>: Create the key by following the instructions available in the following <a href="https://cloud.ibm.com/docs/account?topic=account-userapikey">link</a>
+2. <strong>OpenShift Pull secret</strong>: Download the secret from the following <a href="https://cloud.redhat.com/openshift/install/power/user-provisioned">link</a>.
+You'll need to place the file in the install directory and name it as <strong>pull-secret.txt</strong>
+3. <strong>RHEL Subscription ID and Password</strong>.</p>
+<h2 id="quickstart">Quickstart</h2>
+<ol>
+<li>
+<p>Export the IBM Cloud API Key and RHEL Subscription Password.
+    <code>$ set +o history
+    $ export IBMCLOUD_API_KEY='&lt;your API key&gt;'
+    $ export RHEL_SUBS_PASSWORD='&lt;your RHEL subscription password&gt;'
+    $ set -o history</code></p>
+</li>
+<li>
+<p>Run the <code>create</code> command.
+    <code>$ ./openshift-install-powervs create</code></p>
+<p>The script will setup the required tools and run in interactive mode prompting for inputs.</p>
+<p>Once the above command completes successfully it will print the cluster access information.
+```
+Login to bastion: 'ssh -i automation/data/id_rsa root@145.48.43.53' and start using the 'oc' command.
+To access the cluster on local system when using 'oc' run: 'export KUBECONFIG=/root/ocp-install-dir/automation/kubeconfig'
+Access the OpenShift web-console here: https://console-openshift-console.apps.test-ocp-6f2c.ibm.com
+Login to the console with user: "kubeadmin", and password: "MHvmI-z5nY8-CBFKF-hmCDJ"
+Add the line on local system 'hosts' file:
+145.48.43.53 api.test-ocp-6f2c.ibm.com console-openshift-console.apps.test-ocp-6f2c.ibm.com integrated-oauth-server-openshift-authentication.apps.test-ocp-6f2c.ibm.com oauth-openshift.apps.test-ocp-6f2c.ibm.com prometheus-k8s-openshift-monitoring.apps.test-ocp-6f2c.ibm.com grafana-openshift-monitoring.apps.test-ocp-6f2c.ibm.com example.apps.test-ocp-6f2c.ibm.com</p>
+<p>```</p>
+</li>
+</ol>
+<h2 id="advanced-usage">Advanced Usage</h2>
+<p>Before running the script, you may choose to override some environment variables as per your requirement.</p>
+<h3 id="different-openshift-versions">Different OpenShift Versions</h3>
+<p>By default OpenShift version 4.12 is installed.</p>
+<p>If you want to install 4.11, then export the variable <code>RELEASE_VER</code>.</p>
+<pre><code>$ export RELEASE_VER=&quot;4.11&quot;
+</code></pre>
+<p><code>ARTIFACTS_VERSION</code>: Tag/Branch (eg: release-4.11, v4.11, main) of <a href="https://github.com/ocp-power-automation/ocp4-upi-powervs">ocp4-upi-powervs</a> repository. Default is "main".</p>
+<pre><code>$ export ARTIFACTS_VERSION=&quot;release-4.11&quot;
+</code></pre>
+<h3 id="non-interactive-mode">Non-interactive mode</h3>
+<p>You can avoid the interactive mode by having the required input files available in the install directory</p>
+<p><strong>Required input files</strong>
+1. Terraform vars file (filename: <code>var.tfvars</code>)
+2. SSH key files (filename: <code>id_rsa</code> &amp; <code>id_rsa.pub</code>)</p>
+<pre><code>Example `var.tfvars` file
+```
+ibmcloud_region = "syd"
+ibmcloud_zone = "syd04"
+service_instance_id = "123456abc-xzz-2223434343"
+rhel_image_name = "rhel-83-12062022"
+rhcos_image_name = "rhcos-412-02012023"
+network_name = "ocp-net"
+openshift_install_tarball = "https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/stable-4.12/openshift-install-linux.tar.gz"
+openshift_client_tarball = "https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/stable-4.12/openshift-client-linux.tar.gz"
+cluster_id_prefix = "test-ocp"
+cluster_domain = "xip.io"
+storage_type = "nfs"
+volume_size = "300"
+bastion = {memory = "16", processors = "1", "count" = 1}
+bootstrap = {memory = "32", processors = "0.5", "count" = 1}
+master = {memory = "32", processors = "0.5", "count" = 3}
+worker = {memory = "32", processors = "0.5", "count" = 2}
+rhel_subscription_username = "mysubscription@email.com"
+rhel_subscription_password = "mysubscriptionPassword"
+```
+
+
+You can also pass a custom Terraform variables file using the option `-var-file &lt;filename&gt;` to the script.
+You can also use the option `-var "key=value"` to pass a single variable.
+If the same variable is given more than once then precedence will be from left (low) to right (high).
+</code></pre>
+<h2 id="tutorials">Tutorials</h2>
+<p>Check out the following <a href="https://developer.ibm.com/series/deploy-ocp-cloud-paks-power-virtual-server/">learning path</a> for deploying and using OpenShift on PowerVS</p>
+<h2 id="detailed-explanation-of-the-core-commands">Detailed Explanation of the Core Commands</h2>
+<p>The following core commands are supported by the script.</p>
+<h3 id="setup"><a href="docs/setup/">setup</a></h3>
+<h3 id="variables"><a href="docs/variables/">variables</a></h3>
+<h3 id="create"><a href="docs/create/">create</a></h3>
+<h3 id="destroy"><a href="docs/destroy/">destroy</a></h3>
+<p>Below is a simple flow chart explaining the flow of each command.</p>
+<p><img alt="Flow Chart" src="docs/images/flow_chart.jpg" /></p>
+<h2 id="contributing">Contributing</h2>
+<p>Please see the <a href="CONTRIBUTING/">contributing doc</a> for more details.
+PRs are most welcome !!</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../ocp4-upi-powervm/" class="btn btn-neutral float-right" title="Deploying OpenShift on PowerVM managed via PowerVC">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../ocp4-upi-powervs/" class="btn btn-neutral" title="Deploying OpenShift on IBM Cloud Power Virtual Servers"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../ocp4-upi-powervs/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../ocp4-upi-powervm/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2023-02-01 10:49:06
+-->

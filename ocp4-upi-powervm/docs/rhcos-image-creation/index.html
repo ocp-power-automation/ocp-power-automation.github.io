@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>Rhcos image creation - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Rhcos image creation";
+    var mkdocs_page_input_path = "ocp4-upi-powervm/docs/rhcos-image-creation.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Rhcos image creation</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#option-1">Option-1</a></li>
+<li><a href="#option-2">Option-2</a></li>
+</ul>
+<h1 id="introduction">Introduction</h1>
+<p>Depending on your environment you can follow one of the options to create RHCOS (CoreOS) image in PowerVC</p>
+<h2 id="option-1">Option-1</h2>
+<ol>
+<li>Download the RHCOS image from the following <a href="https://mirror.openshift.com/pub/openshift-v4/ppc64le/dependencies/rhcos/pre-release/latest/rhcos-openstack.ppc64le.qcow2.gz">link</a> on a system with public internet access.
+You'll need a way to transfer this image to a RHEL VM that you'll create in the next step.</li>
+<li>Login to PowerVC and create a RHEL 8.x VM having an additional empty volume with minimum size of 120G. <strong>Please make a note of the new volume name</strong>.</li>
+<li>Login to the VM and execute the following steps</li>
+<li>Install <code>wget</code>, <code>qemu-img</code>, <code>parted</code> and <code>gzip</code> packages</li>
+<li>Transfer the downloaded RHCOS image to this VM</li>
+<li>Extract the image
+      <code>$ gunzip rhcos-openstack.ppc64le.qcow2.gz</code></li>
+<li>Convert the CoreOS qcow2 image to raw image
+      <code>$ qemu-img convert -f qcow2 -O raw rhcos-openstack.ppc64le.qcow2 rhcos-latest.raw</code></li>
+<li>Identify the disk device representing the additional empty volume attached to the VM
+      <code>$ disk_device_list=$(sudo parted -l 2&gt;&amp;1 | grep -E -v "$readonly" | grep -E -i "ERROR:" |cut -f2 -d: | grep -v "Can't" | xargs -i echo "Disk.{}:|" | xargs echo | tr -d ' ' | rev | cut -c2- | rev)
+      $ empty_disk_device=$(sudo fdisk -l | grep -E "$disk_list" | sort -k5nr | head -n 1 | tail -n1 | cut -f1 -d: | cut -f2 -d' ')
+      $ echo "$empty_disk_device"'</code></li>
+<li>
+<p>Dump the raw image to the newly added disk
+      <code>$ dd if=rhcos-latest.raw of=${empty_disk_device} bs=4M</code>
+      where <code>${empty_disk_device}</code> is the device representing the attached volume</p>
+</li>
+<li>
+<p>Detach the volume, from the VM</p>
+</li>
+<li>
+<p>Go to PowerVC UI-&gt;images and select <strong>create</strong> for creating a new image</p>
+</li>
+<li>
+<p>Specify <code>image name</code> and choose <code>PowerVM</code> for Hypervisor type, <code>RHEL</code> for Operating system and <code>littleEndian</code> for Endianness</p>
+</li>
+<li>
+<p>Select <strong>Add Volume</strong> and search for the specific volume name (where you dd-ed the RHCOS image ) and set <strong>Boot set</strong> to yes.</p>
+</li>
+<li>
+<p>Create the image by clicking on <strong>create</strong></p>
+</li>
+</ol>
+<h2 id="option-2">Option-2</h2>
+<p>Creating and importing RHCOS OVA image</p>
+<ol>
+<li>Download the RHCOS image from the following <a href="https://mirror.openshift.com/pub/openshift-v4/ppc64le/dependencies/rhcos/pre-release/latest/rhcos-openstack.ppc64le.qcow2.gz">link</a> on a system with public internet access.
+You'll need a way to transfer this image to a RHEL VM that you'll create in the next step.</li>
+<li>Login to PowerVC and create a RHEL 8.x VM</li>
+<li>Use the script https://github.com/ocp-power-automation/infra/blob/master/scripts/images/convert_qcow2_ova.py and
+   convert the RHCOS qcow2 image to an OVA formatted image.</li>
+<li>Follow the steps mentioned in <a href="https://www.ibm.com/support/knowledgecenter/SSVSPA_1.4.4/com.ibm.powervc.cloud.help.doc/powervc_import_image_cloud.html">PowerVC docs</a> to
+   import the OVA image.</li>
+</ol>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

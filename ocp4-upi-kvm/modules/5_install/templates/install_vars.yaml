@@ -1,0 +1,23 @@
+---
+install_config:
+   cluster_domain: ${cluster_domain}
+   cluster_id: ${cluster_id}
+   pull_secret: '${pull_secret}'
+   public_ssh_key: '${public_ssh_key}'
+
+workdir: ~/openstack-upi
+storage_type: ${storage_type}
+log_level: ${log_level}
+release_image_override: '${release_image_override}'
+chronyconfig:
+  enabled: ${chrony_config}
+%{ if chrony_config_servers != [] ~}
+  content:
+%{ for item in chrony_config_servers ~}
+    - server: ${item.server}
+      options: ${lookup(item, "options", "iburst")}
+%{ endfor ~}
+%{ endif ~}
+powervm_rmc: false
+
+enable_local_registry: ${enable_local_registry}

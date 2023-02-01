@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>Automation Host Prerequisites - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Automation Host Prerequisites";
+    var mkdocs_page_input_path = "ocp4-upi-kvm/docs/automation_host_prereqs.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Automation Host Prerequisites</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="automation-host-prerequisites">Automation Host Prerequisites</h1>
+<!-- TOC -->
+
+<ul>
+<li><a href="#automation-host-prerequisites">Automation Host Prerequisites</a></li>
+<li><a href="#configure-your-firewall">Configure Your Firewall</a></li>
+<li><a href="#automation-host-setup">Automation Host Setup</a><ul>
+<li><a href="#terraform">Terraform</a></li>
+<li><a href="#terraform-providers">Terraform Providers</a></li>
+<li><a href="#git">Git</a></li>
+<li><a href="#rhcos-and-rhel-8x-images-for-openshift">RHCOS and RHEL 8.X Images for OpenShift</a></li>
+<li><a href="#download-the-rhel-qcow2-image">Download the RHEL Qcow2 image</a><ul>
+<li><a href="#customize-the-rhel-qcow2-image">Customize the RHEL Qcow2 image</a></li>
+</ul>
+</li>
+<li><a href="#download-the-rhcos-qcow2-image">Download the RHCOS Qcow2 image</a></li>
+</ul>
+</li>
+</ul>
+<!-- /TOC -->
+
+<h2 id="configure-your-firewall">Configure Your Firewall</h2>
+<p>If your automation host is behind a firewall, you will need to ensure the following ports are open in order to use ssh, http, and https:
+- 22, 443, 80</p>
+<p>These additional ports are required for the ocp cli (<code>oc</code>) post-install:
+- 6443</p>
+<h2 id="automation-host-setup">Automation Host Setup</h2>
+<p>Install the following packages on the automation host. Select the appropriate install binaries based on your automation host platform - Mac/Linux.
+It's preferable to run this automation code on Linux host since Linux is required for customizing the RHEL image.</p>
+<h3 id="terraform">Terraform</h3>
+<p><strong>Terraform &gt;= 0.13.0</strong>: Please refer to the <a href="https://learn.hashicorp.com/terraform/getting-started/install.html">link</a> for instructions on installing Terraform. For validating the version run <code>terraform version</code> command after install.</p>
+<p><strong>Terraform</strong> binary on IBM Power (<code>ppc64le</code>) is not available for download from Hashicorp website.
+You can download it from the following <a href="https://www.power-devops.com/terraform">link-1</a> or <a href="https://oplab9.parqtec.unicamp.br/pub/ppc64el/terraform/">link-2</a> or you will need to compile it from source by running:</p>
+<pre><code>TAG_VERSION=v0.13.5
+git clone https://github.com/hashicorp/terraform --branch $TAG $GOPATH/src/github.com/hashicorp/terraform
+cd $GOPATH/src/github.com/hashicorp/terraform
+TF_DEV=1 scripts/build.sh
+</code></pre>
+<p>Validate using:</p>
+<pre><code>$GOPATH/bin/terraform version
+</code></pre>
+<h3 id="terraform-providers">Terraform Providers</h3>
+<p>Please follow the <a href="../terraform-provider-build/">guide</a> to build and install the required Terraform providers.</p>
+<h3 id="git">Git</h3>
+<p><strong>Git</strong>:  Please refer to the <a href="https://git-scm.com/book/en/v2/Getting-Started-Installing-Git">link</a> for instructions on installing Git.</p>
+<h3 id="rhcos-and-rhel-8x-images-for-openshift">RHCOS and RHEL 8.X Images for OpenShift</h3>
+<p>You'll need to have the RedHat CoreOS (RHCOS) and RHEL 8.2 (or later) image available on the automation host or via an HTTP(S) server.
+RHEL 8.x image is used by bastion node, and RHCOS image is used for boostrap, master and worker nodes.</p>
+<h4 id="download-the-rhel-qcow2-image">Download the RHEL Qcow2 image</h4>
+<ul>
+<li>Login to the RedHat portal and click on the <a href="https://access.redhat.com/downloads">Downloads</a> tab.</li>
+<li>Click on the product <a href="https://access.redhat.com/downloads/content/479/">Red Hat Enterprise Linux 8</a> from the list.</li>
+<li>In the "Product Variant" drop-down select "Red Hat Enterprise Linux for Power, little endian".</li>
+<li>In the "Version" drop-down select the version of RHEL you want to download. For example, will use the latest as 8.2.</li>
+<li>In the "Product Software" tab, click on "Download Now" button adjacent to "Red Hat Enterprise Linux 8.2 Update KVM Guest Image".</li>
+<li>Save the Qcow2 image.</li>
+<li>If your automation host is not Linux, then you will need to copy the Qcow2 image to a Linux host for the next step.</li>
+</ul>
+<h5 id="customize-the-rhel-qcow2-image">Customize the RHEL Qcow2 image</h5>
+<p>Customize the Qcow2 image to set a root password and disable the cloud-init service.
+You will need the 'libguestfs-tools' package installed on the Linux machine to run the below command (Not available on Mac/Windows).</p>
+<pre><code># virt-customize -a &lt;qcow2 image file name&gt; --root-password password:&lt;password&gt; --uninstall cloud-init
+[   0.0] Examining the guest ...
+[  11.5] Setting a random seed
+[  11.5] Uninstalling packages: cloud-init
+[  13.9] Setting passwords
+[  15.6] Finishing off
+</code></pre>
+<p>On successful completion, copy the image back to the automation host (if it was not Linux) or make it available via an HTTP(S) server.</p>
+<p>Update the following Terraform input variables:
+ * <code>rhel_password = "&lt;password&gt;"</code></p>
+<h4 id="download-the-rhcos-qcow2-image">Download the RHCOS Qcow2 image</h4>
+<ul>
+<li>Select the RHCOS version you need from the <a href="http://mirror.openshift.com/pub/openshift-v4/ppc64le/dependencies/rhcos/">OpenShift mirror</a>.</li>
+<li>Find and download the QEMU qcow2 image gzip file. eg: rhcos-4.4.9-ppc64le-qemu.ppc64le.qcow2.gz</li>
+<li>Extract the Qcow2 image and place it on the automation host or make it available via an HTTP(S) server.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

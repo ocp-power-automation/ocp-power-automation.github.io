@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>How to use var.tfvars - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "How to use var.tfvars";
+    var mkdocs_page_input_path = "ocp4-upi-kvm/docs/var.tfvars-doc.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>How to use var.tfvars</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="how-to-use-vartfvars">How to use var.tfvars</h1>
+<ul>
+<li><a href="#how-to-use-vartfvars">How to use var.tfvars</a></li>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#libvirt-details">Libvirt Details</a></li>
+<li><a href="#openshift-cluster-details">OpenShift Cluster Details</a></li>
+<li><a href="#openshift-installation-details">OpenShift Installation Details</a></li>
+<li><a href="#misc-customizations">Misc Customizations</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This guide gives an overview of the various terraform variables that are used for the deployment.
+The default values are set in <a href="../../variables.tf">variables.tf</a></p>
+<h3 id="libvirt-details">Libvirt Details</h3>
+<p>These set of variables specify the Libvirt details.</p>
+<pre><code>libvirt_uri                        = &quot;qemu+tcp://localhost/system&quot;
+host_address                       = &quot;&quot;
+images_path                        = &quot;/home/libvirt/openshift-images&quot;
+</code></pre>
+<h3 id="openshift-cluster-details">OpenShift Cluster Details</h3>
+<p>These set of variables specify the cluster capacity.</p>
+<pre><code>bastion                            = { memory = 8192,  vcpu = 2 }
+bootstrap                          = { memory = 8192,  vcpu = 4, count = 1 }
+master                             = { memory = 16384, vcpu = 4, count = 3 }
+worker                             = { memory = 16384, vcpu = 4, count = 2 }
+</code></pre>
+<p>You can optionally set worker <code>count</code> value to 0 in which case all the cluster pods will be running on the master/supervisor nodes.
+Ensure you use proper sizing for master/supervisor nodes to avoid resource starvation for containers.</p>
+<p>These set of variables specify the RHEL and RHCOS boot image location. Ensure that you use the correct RHCOS image specific to the pre-release version.</p>
+<pre><code>bastion_image                      = &quot;&lt;url-or-path-to-rhel-qcow2&gt;&quot;
+rhcos_image                        = &quot;&lt;url-or-path-to-rhcos-qcow2&gt;&quot;
+</code></pre>
+<p>These set of variables specify the username, password and the SSH key to be used for accessing the bastion node.</p>
+<pre><code>rhel_username                      = &quot;root&quot;
+rhel_password                      = &quot;&lt;password&gt;&quot;
+public_key_file                    = &quot;data/id_rsa.pub&quot;
+private_key_file                   = &quot;data/id_rsa&quot;
+</code></pre>
+<p>Please note that only OpenSSH formatted keys are supported. Refer to the following links for instructions on creating SSH key based on your platform.
+- Windows 10 - https://phoenixnap.com/kb/generate-ssh-key-windows-10
+- Mac OSX - https://www.techrepublic.com/article/how-to-generate-ssh-keys-on-macos-mojave/
+- Linux - https://www.siteground.com/kb/generate_ssh_key_in_linux/</p>
+<p>Create the SSH key-pair and keep it under the <code>data</code> directory</p>
+<p>These set of variables specify the RHEL subscription details.
+This is sensitive data, and if you don't want to save it on disk, use environment variables <code>RHEL_SUBS_USERNAME</code> and <code>RHEL_SUBS_PASSWORD</code> and
+pass them to <code>terraform apply</code> command as shown in the <a href="../quickstart/#setup-terraform-variables">Quickstart guide</a>.</p>
+<pre><code>rhel_subscription_username         = &quot;user@test.com&quot;
+rhel_subscription_password         = &quot;mypassword&quot;
+</code></pre>
+<p>If you have an org wide activation key, then use the following variables</p>
+<pre><code>rhel_subscription_org              = &quot;&quot;
+rhel_subscription_activationkey    = &quot;&quot;
+</code></pre>
+<h3 id="openshift-installation-details">OpenShift Installation Details</h3>
+<p>These variables specify the URL for the OpenShift installer and client binaries.
+Change the URL to the specific pre-release version that you want to install on PowerVS.
+Reference link - <code>https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview</code></p>
+<pre><code>openshift_install_tarball          = &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest/openshift-install-linux.tar.gz&quot;
+openshift_client_tarball           = &quot;https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest/openshift-client-linux.tar.gz&quot;
+</code></pre>
+<p>This variable specifies the OpenShift pull secret. This is available from the following link -  https://cloud.redhat.com/openshift/install/power/user-provisioned
+Download the secret and copy it to <code>data/pull-secret.txt</code>.</p>
+<pre><code>pull_secret_file                   = &quot;data/pull-secret.txt&quot;
+</code></pre>
+<p>These variables specifies the OpenShift cluster domain details.
+Edit it as per your requirements.</p>
+<pre><code>cluster_domain                     = &quot;ibm.com&quot;
+cluster_id_prefix                  = &quot;test-ocp&quot;
+cluster_id                         = &quot;&quot;
+</code></pre>
+<p>The <code>cluster_id_prefix</code> should not be more than 8 characters. Nodes are pre-fixed with this value.
+Default value is <code>test-ocp</code></p>
+<p>A random value will be used for <code>cluster_id</code> if not set.
+The total length of <code>cluster_id_prefix</code>.<code>cluster_id</code> should not exceed 14 characters.</p>
+<h3 id="misc-customizations">Misc Customizations</h3>
+<p>These variables provides miscellaneous customizations. For common usage scenarios these are not required and should be left unchanged.</p>
+<p>The following variable is used to specify the Libvirt VM CPU mode. For example custom, host-passthrough, host-model.</p>
+<pre><code>cpu_mode                           = &quot;&quot;
+</code></pre>
+<p>The following variable is used to define the network subnet for the OCP cluster. Default is set to '192.168.27.0/24'.</p>
+<pre><code>network_cidr                       = &quot;&quot;
+</code></pre>
+<p>The following variables can be used for disconnected install by using a local mirror registry on the bastion node.</p>
+<pre><code>enable_local_registry              = false  #Set to true to enable usage of local registry for restricted network install.
+local_registry_image               = &quot;docker.io/ibmcom/registry-ppc64le:2.6.2.5&quot;
+ocp_release_tag                    = &quot;4.4.9-ppc64le&quot;
+</code></pre>
+<p>This variable can be used for trying out custom OpenShift install image for development use.</p>
+<pre><code>release_image_override             = &quot;&quot;
+</code></pre>
+<p>These variables specify the ansible playbooks that are used for OpenShift install and post-install customizations.</p>
+<pre><code>helpernode_tag                     = &quot;5eab3db53976bb16be582f2edc2de02f7510050d&quot;
+install_playbook_tag               = &quot;02a598faa332aa2c3d53e8edd0e840440ff74bd5&quot;
+</code></pre>
+<p>GThese variables can be used when debugging ansible playbooks</p>
+<pre><code>installer_log_level                = &quot;info&quot;
+ansible_extra_options              = &quot;-v&quot;
+</code></pre>
+<p>This variable specifies the external DNS servers to forward DNS queries that cannot be resolved locally.</p>
+<pre><code>dns_forwarders                     = &quot;1.1.1.1; 9.9.9.9&quot;
+</code></pre>
+<p>These are NTP specific variables that are used for time-synchronization in the OpenShift cluster.</p>
+<pre><code>chrony_config                      = true
+chrony_config_servers              = [ {server = &quot;0.centos.pool.ntp.org&quot;, options = &quot;iburst&quot;}, {server = &quot;1.centos.pool.ntp.org&quot;, options = &quot;iburst&quot;} ]
+</code></pre>
+<p>These variables specify details about NFS storage that is setup by default on the bastion server.</p>
+<pre><code>storage_type                       = &quot;nfs&quot;
+volume_size                        = &quot;300&quot; # Value in GB
+</code></pre>
+<p>The following variables are specific to upgrading an existing installation.</p>
+<pre><code>upgrade_version                    = &quot;&quot;
+upgrade_channel                    = &quot;&quot;  #(stable-4.x, fast-4.x, candidate-4.x) eg. stable-4.5
+upgrade_pause_time                 = &quot;90&quot;
+upgrade_delay_time                 = &quot;600&quot;
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

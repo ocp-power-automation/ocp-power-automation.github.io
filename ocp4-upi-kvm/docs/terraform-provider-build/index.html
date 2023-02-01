@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>Terraform Providers - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Terraform Providers";
+    var mkdocs_page_input_path = "ocp4-upi-kvm/docs/terraform-provider-build.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Terraform Providers</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="terraform-providers">Terraform Providers</h1>
+<p>At present Terraform registry does not support some plugins. Third-party providers can be manually installed using <a href="https://www.terraform.io/docs/commands/cli-config.html#filesystem_mirror">local filesystem as a mirror</a>. This is in addition to the provider plugins that are downloaded by Terraform during <code>terraform init</code>.</p>
+<p>Follow below steps based on your Terraform client machine to setup terraform providers. These steps are required to be followed before running the automation.</p>
+<p>Most of the steps require Go to be installed from https://golang.org/dl/. We recommed Go version above 1.14. Make sure to set your GOPATH environment variable and add $GOPATH/bin to PATH.</p>
+<h2 id="on-maclinux">On Mac/Linux</h2>
+<p>Identify your platform. All example commands assume Linux as a platform:</p>
+<blockquote>
+<p>Linux: linux_amd64</p>
+<p>Mac OSX: darwin_amd64</p>
+</blockquote>
+<p>Identify your Terraform plugin directory. You will need to create the directory on your client machine:</p>
+<blockquote>
+<p>Linux: ~/.local/share/terraform/plugins OR /usr/local/share/terraform/plugins OR /usr/share/terraform/plugins.</p>
+<p>Mac OSX: ~/Library/Application Support/io.terraform/plugins OR /Library/Application Support/io.terraform/plugins</p>
+</blockquote>
+<p><strong>Libvirt provider</strong>: Please refer to the section below for instructions on installing the libvirt provider plugin. For <a href="https://github.com/dmacvicar/terraform-provider-libvirt#building-from-source">more information</a>.</p>
+<p>Run below commands to install libvirt provider. Make sure to change <code>PLATFORM</code> and <code>PLUGIN_PATH</code> values based on your client machine.</p>
+<pre><code>PLATFORM=linux_amd64
+PLUGIN_PATH=~/.local/share/terraform/plugins
+
+#Install the Libvirt provider plugin:
+git clone https://github.com/dmacvicar/terraform-provider-libvirt $GOPATH/src/github.com/dmacvicar/terraform-provider-libvirt
+cd $GOPATH/src/github.com/dmacvicar/terraform-provider-libvirt
+make install
+cd -
+
+# Create plugin directory and copy the binary
+mkdir -p $PLUGIN_PATH/registry.terraform.io/dmacvicar/libvirt/1.0.0/$PLATFORM/
+cp $GOPATH/bin/terraform-provider-libvirt $PLUGIN_PATH/registry.terraform.io/dmacvicar/libvirt/1.0.0/$PLATFORM/terraform-provider-libvirt
+</code></pre>
+<p>Upon successful completion. Please follow the instructions outlined here
+https://github.com/ocp-power-automation/ocp4-upi-kvm/blob/master/docs/quickstart.md#start-install</p>
+<h2 id="on-ibm-power-systems">On IBM Power Systems</h2>
+<p>Identify your platform. All example commands assume Linux as a platform:</p>
+<blockquote>
+<p>Linux: linux_ppc64le</p>
+</blockquote>
+<p>Identify your Terraform plugin directory. You will need to create the directory on your client machine:</p>
+<blockquote>
+<p>Linux: ~/.local/share/terraform/plugins OR /usr/local/share/terraform/plugins OR /usr/share/terraform/plugins.</p>
+</blockquote>
+<p>Make sure to change <code>PLATFORM</code> and <code>PLUGIN_PATH</code> values based on your client machine.</p>
+<p><strong>terraform-provider-libvirt</strong>: Please refer to the section below for instructions on installing the libvirt provider plugin. For <a href="https://github.com/dmacvicar/terraform-provider-libvirt#building-from-source">more information</a>.</p>
+<pre><code>PLATFORM=linux_ppc64le
+PLUGIN_PATH=~/.local/share/terraform/plugins
+
+#Install the Libvirt provider plugin:
+git clone https://github.com/dmacvicar/terraform-provider-libvirt $GOPATH/src/github.com/dmacvicar/terraform-provider-libvirt
+cd $GOPATH/src/github.com/dmacvicar/terraform-provider-libvirt
+make install
+cd -
+
+# Create plugin directory and copy the binary
+mkdir -p $PLUGIN_PATH/registry.terraform.io/dmacvicar/libvirt/1.0.0/$PLATFORM/
+cp $GOPATH/bin/terraform-provider-libvirt $PLUGIN_PATH/registry.terraform.io/dmacvicar/libvirt/1.0.0/$PLATFORM/terraform-provider-libvirt
+</code></pre>
+<p><strong>terraform-provider-random</strong>: Please refer to the section below for instructions on installing the random provider plugin. For <a href="https://github.com/hashicorp/terraform-provider-random#building-the-provider">more information</a>.</p>
+<p>Note: Set <code>VERSION</code> to a compatible version eg. 2.3.0</p>
+<pre><code>VERSION=2.3.0
+PLATFORM=linux_ppc64le
+PLUGIN_PATH=~/.local/share/terraform/plugins
+
+#Install the random provider plugin:
+git clone https://github.com/hashicorp/terraform-provider-random --branch v$VERSION  $GOPATH/src/github.com/hashicorp/terraform-provider-random
+cd $GOPATH/src/github.com/hashicorp/terraform-provider-random
+make build
+cd -
+
+# Create plugin directory and copy the binary
+mkdir -p $PLUGIN_PATH/registry.terraform.io/hashicorp/random/$VERSION/$PLATFORM/
+cp $GOPATH/bin/terraform-provider-random $PLUGIN_PATH/registry.terraform.io/hashicorp/random/$VERSION/$PLATFORM/terraform-provider-random
+</code></pre>
+<p><strong>terraform-provider-ignition</strong>: Please refer to the section below for instructions on installing the ignition provider plugin. For <a href="https://github.com/community-terraform-providers/terraform-provider-ignition#building-the-provider">more information</a>.</p>
+<p>Note: Set <code>VERSION</code> to a compatible version eg. 2.1.0</p>
+<pre><code>VERSION=2.1.0
+PLATFORM=linux_ppc64le
+PLUGIN_PATH=~/.local/share/terraform/plugins
+
+#Install the ignition provider plugin:
+git clone https://github.com/community-terraform-providers/terraform-provider-ignition --branch v$VERSION  $GOPATH/src/github.com/terraform-providers/terraform-provider-ignition
+cd $GOPATH/src/github.com/terraform-providers/terraform-provider-ignition
+make build
+cd -
+
+# Create plugin directory and copy the binary
+mkdir -p $PLUGIN_PATH/registry.terraform.io/terraform-providers/ignition/$VERSION/$PLATFORM/
+cp $GOPATH/bin/terraform-provider-ignition $PLUGIN_PATH/registry.terraform.io/terraform-providers/ignition/$VERSION/$PLATFORM/terraform-provider-ignition
+</code></pre>
+<p><strong>terraform-provider-null</strong>: Please refer to the section below for instructions on installing the null provider plugin. For <a href="https://github.com/hashicorp/terraform-provider-null#building-the-provider">more information</a>.</p>
+<p>Note: Set <code>VERSION</code> to a compatible version eg. 2.1.2</p>
+<pre><code>VERSION=2.1.2
+PLATFORM=linux_ppc64le
+PLUGIN_PATH=~/.local/share/terraform/plugins
+
+#Install the null provider plugin:
+git clone https://github.com/hashicorp/terraform-provider-null --branch v$VERSION  $GOPATH/src/github.com/hashicorp/terraform-provider-null
+cd $GOPATH/src/github.com/hashicorp/terraform-provider-null
+make build
+cd -
+
+# Create plugin directory and copy the binary
+mkdir -p $PLUGIN_PATH/registry.terraform.io/hashicorp/null/$VERSION/$PLATFORM/
+cp $GOPATH/bin/terraform-provider-null $PLUGIN_PATH/registry.terraform.io/hashicorp/null/$VERSION/$PLATFORM/terraform-provider-null
+</code></pre>
+<p>Upon successful completion. Please follow the instructions outlined here
+https://github.com/ocp-power-automation/ocp4-upi-kvm/blob/master/docs/quickstart.md#start-install</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

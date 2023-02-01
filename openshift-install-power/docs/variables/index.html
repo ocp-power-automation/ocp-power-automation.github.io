@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>Command variables - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Command variables";
+    var mkdocs_page_input_path = "openshift-install-power/docs/variables.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Command variables</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="command-variables">Command variables</h1>
+<h2 id="what-it-does">What it does</h2>
+<p>This command when executed will run interactive prompts for gathering inputs for installing OpenShift on PowerVS. The results will be stored in a file named <code>var.tfvars</code> in the current directory which will be used as an input to the Terraform automation.</p>
+<p>The installation process needs <code>pull-secret.txt</code> in the current directory for downloading OpenShift images on the cluster. If not found, the variables command will prompt for pull-secret contents.</p>
+<p>Similar to pull-secret.txt file the script will also lookup for <code>id_rsa</code> &amp; <code>id_rsa.pub</code> files in the current directory. If not found it will prompt to use the current login user's SSH key pair at <code>~/.ssh/</code>. If you reply a <code>no</code> then the script will create an SSH key pair for you in the current directory. The private key <code>id_rsa</code> can be used to login to the cluster. The SSH keys should be in OpenSSH format and without a passphrase.</p>
+<p>Please ensure you have exported the IBM Cloud API key using following command:</p>
+<pre><code>export IBMCLOUD_API_KEY=&lt;your api key&gt;
+</code></pre>
+<p>Optionally you could also export the RHEL subscription password if you do not want to store it in the variables file. </p>
+<pre><code>export RHEL_SUBS_PASSWORD='&lt;your subscription password&gt;'
+</code></pre>
+<p>The script will try to filter the images for selection. The argument <code>-all-images</code> can be used to display all the available images during the prompt for RHEL and RHCOS image.</p>
+<p><strong>There will be series of questions mainly categorized as:</strong></p>
+<h3 id="multi-choice-question">Multi choice question</h3>
+<p>List of options will be displayed where you need to enter the number corresponding to the choice you want to select.</p>
+<pre><code>[question] &gt; Select the RHEL image to use for bastion node:
+1) rhel-82-10162020
+2) rhel-83-11032020
+#? 1
+- You have answered: rhel-82-10162020
+</code></pre>
+<h3 id="question-with-default-value">Question with default value</h3>
+<p>The question will have a default value present at the end in (round-brackets). Just press enter if you want to use the default value OR type the value you want and press Enter key.</p>
+<pre><code>[question] &gt; Enter a short name to identify the cluster (test-ocp)
+?
+- You have answered: test-ocp
+[question] &gt; Enter a domain name for the cluster (ibm.com)
+? myorg.com
+- You have answered: myorg.com
+
+</code></pre>
+<h3 id="question-in-plain-text">Question in plain text</h3>
+<p>The question which can be answered in plain text. Enter the value you want and press Enter key.</p>
+<pre><code>[question] &gt; Enter RHEL subscription username for bastion nodes
+? myredhatuser
+- You have answered: myredhatuser
+</code></pre>
+<h3 id="question-with-sensitive-value">Question with sensitive value</h3>
+<p>The question which accept sensitive information such as passwords and pull-secret contents.</p>
+<pre><code>[question] &gt; Enter the password for above username. WARNING: If you do not wish to store the subscription password please export RHEL_SUBS_PASSWORD
+- ***********
+</code></pre>
+<h2 id="usage">Usage</h2>
+<pre><code># ./openshift-install-powervs variables
+[setup_tools] Verifying the latest packages and tools
+[variables] Trying to login with the provided IBMCLOUD_API_KEY...
+[question] &gt; Select the Service Instance name to use:
+1) ocp-cicd-toronto-01
+2) ocp-internal-toronto
+#? 1
+- You have answered: ocp-cicd-toronto-01
+Targeting service crn:v1:bluemix:public:power-iaas:tor01:a/65b64c1f1c2XXXXX:4a1f10a2-0797-4ac8-9c41-XXXXXXX::...
+[variables] Gathering information from the selected Service Instance... Please wait
+[question] &gt; Select the RHEL image to use for bastion node:
+1) rhel-82-10162020
+2) rhel-83-11032020
+#? 1
+- You have answered: rhel-82-10162020
+[question] &gt; Select the RHCOS image to use for cluster nodes:
+1) rhcos-45-09242020
+2) rhcos-46-09182020
+3) rhcos-47-10172020
+#? 2
+- You have answered: rhcos-46-09182020
+[question] &gt; Select the private network to use:
+1) ocp-net
+#? 1
+- You have answered: ocp-net
+[question] &gt; Select the system type to use for cluster nodes:
+1) e980
+2) s922
+#? 2
+- You have answered: s922
+[question] &gt; Select the OCP version to use:
+1) 4.5.4            4) 4.5.7           7) 4.5.10         10) 4.5.13         13) 4.5.16         16) 4.5.19         19) fast-4.5
+2) 4.5.5            5) 4.5.8           8) 4.5.11         11) 4.5.14         14) 4.5.17         17) 4.5.20         20) latest-4.5
+3) 4.5.6            6) 4.5.9           9) 4.5.12         12) 4.5.15         15) 4.5.18         18) candidate-4.5  21) stable-4.5
+#? 11
+- You have answered: 4.5.14
+[question] &gt; Enter a short name to identify the cluster (test-ocp)
+?
+- You have answered: test-ocp
+[question] &gt; Enter a domain name for the cluster (ibm.com)
+? myorg.com
+- You have answered: myorg.com
+[question] &gt; Do you want to configure High Availability for bastion nodes?
+1) yes
+2) no
+#? 2
+- You have answered: no
+[question] &gt; Do you need NFS storage to be configured?
+1) yes
+2) no
+#? 1
+- You have answered: yes
+[question] &gt; Enter the NFS volume size(GB) (300)
+?
+- You have answered: 300
+[question] &gt; Select the flavor for the cluster nodes:
+1) large
+2) medium
+3) small
+4) CUSTOM
+#? 4
+- You have answered: CUSTOM
+[question] &gt; Do you want to use the default configuration for all the cluster nodes?
+1) yes
+2) no
+#? 1
+- You have answered: yes
+[question] &gt; Enter RHEL subscription username for bastion nodes
+? myredhatuser
+- You have answered: myredhatuser
+[question] &gt; Enter the password for above username. WARNING: If you do not wish to store the subscription password please export RHEL_SUBS_PASSWORD
+
+[question] &gt; Enter the pull-secret
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+***************************************
+[question] &gt; Found SSH key pair in /root/.ssh/ do you want to use them? (yes)
+
+?
+- You have answered: yes
+[question] &gt; Do you want to use IBM Cloud Classic DNS and VPC Load Balancer services?
+1) yes
+2) no
+#? 1
+- You have answered: yes
+[question] &gt; Enter IBM Cloud VPC name
+? ocp-vpc-fra
+- You have answered: ocp-vpc-fra
+[question] &gt; Enter IBM Cloud VPC subnet name
+? ocp-subnet
+- You have answered: ocp-subnet
+[question] &gt; Enter IBM Cloud VPC Infrastructure region. (Power VS region will be used for VPC if you do not provide any value).
+? us-south
+- You have answered: us-south
+[variables] SUCCESS: variables command completed!
+</code></pre>
+<h3 id="using-with-flavor-argument">Using with flavor argument</h3>
+<p>It skips all flavor related questions.</p>
+<pre><code># ./openshift-install-powervs variables -flavor small
+[setup_tools] Verifying the latest packages and tools
+[variables] Trying to login with the provided IBMCLOUD_API_KEY...
+[question] &gt; Select the Service Instance name to use:
+1) ocp-cicd-toronto-01
+2) ocp-internal-toronto
+#? 1
+- You have answered: ocp-cicd-toronto-01
+Targeting service crn:v1:bluemix:public:power-iaas:tor01:a/65b64c1f1c2XXXXX:4a1f10a2-0797-4ac8-9c41-XXXXXXX::...
+[variables] Gathering information from the selected Service Instance... Please wait
+[question] &gt; Select the RHEL image to use for bastion node:
+1) rhel-82-10162020
+2) rhel-83-11032020
+#? 1
+- You have answered: rhel-82-10162020
+[question] &gt; Select the RHCOS image to use for cluster nodes:
+1) rhcos-45-09242020
+2) rhcos-46-09182020
+3) rhcos-47-10172020
+#? 2
+- You have answered: rhcos-46-09182020
+[question] &gt; Select the private network to use:
+1) ocp-net
+#? 1
+- You have answered: ocp-net
+[question] &gt; Select the OCP version to use:
+1) 4.5.4            4) 4.5.7           7) 4.5.10         10) 4.5.13         13) 4.5.16         16) 4.5.19         19) fast-4.5
+2) 4.5.5            5) 4.5.8           8) 4.5.11         11) 4.5.14         14) 4.5.17         17) 4.5.20         20) latest-4.5
+3) 4.5.6            6) 4.5.9           9) 4.5.12         12) 4.5.15         15) 4.5.18         18) candidate-4.5  21) stable-4.5
+#? 11
+- You have answered: 4.5.14
+[question] &gt; Enter a short name to identify the cluster (test-ocp)
+?
+- You have answered: test-ocp
+[question] &gt; Enter a domain name for the cluster (ibm.com)
+? myorg.com
+- You have answered: myorg.com
+[question] &gt; Do you want to configure High Availability for bastion nodes?
+1) yes
+2) no
+#? 2
+- You have answered: no
+[question] &gt; Do you need NFS storage to be configured?
+1) yes
+2) no
+#? 2
+- You have answered: no
+[question] &gt; Enter RHEL subscription username for bastion nodes
+? myredhatuser
+- You have answered: myredhatuser
+[question] &gt; Enter the password for above username. WARNING: If you do not wish to store the subscription password please export RHEL_SUBS_PASSWORD
+
+[question] &gt; Enter the pull-secret
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+********************************************************************************************************************************
+***************************************
+[question] &gt; Found SSH key pair in /root/.ssh/ do you want to use them? (yes)
+
+?
+- You have answered: yes
+[question] &gt; Do you want to use IBM Cloud Classic DNS and VPC Load Balancer services?
+1) yes
+2) no
+#? 1
+- You have answered: yes
+[question] &gt; Enter IBM Cloud VPC name
+? ocp-vpc-fra
+- You have answered: ocp-vpc-fra
+[question] &gt; Enter IBM Cloud VPC subnet name
+? ocp-subnet
+- You have answered: ocp-subnet
+[question] &gt; Enter IBM Cloud VPC Infrastructure region. (Power VS region will be used for VPC if you do not provide any value).
+? us-south
+- You have answered: us-south
+[variables] SUCCESS: variables command completed!
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

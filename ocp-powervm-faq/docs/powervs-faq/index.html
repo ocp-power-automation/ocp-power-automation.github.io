@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>FAQ for OpenShift on IBM Cloud Power Virtual Servers - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "FAQ for OpenShift on IBM Cloud Power Virtual Servers";
+    var mkdocs_page_input_path = "ocp-powervm-faq/docs/powervs-faq.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../openshift-install-power/">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#powervs-frequently-asked-questions">PowerVS Frequently Asked Questions</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#when-building-out-a-cluster">When Building out a Cluster</a></li>
+        
+            <li><a class="toctree-l3" href="#problems-on-a-running-cluster">Problems on a Running Cluster</a></li>
+        
+            <li><a class="toctree-l3" href="#securing-a-cluster">Securing a Cluster</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>FAQ for OpenShift on IBM Cloud Power Virtual Servers</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="powervs-frequently-asked-questions">PowerVS Frequently Asked Questions</h1>
+<hr />
+<h2 id="when-building-out-a-cluster">When Building out a Cluster</h2>
+<h4 id="vm-console-shows-grub">VM Console shows "grub&gt;"</h4>
+<p>Not the end of the world. Just type <code>normal</code> and hit ENTER.</p>
+<h4 id="vm-console-shows-grub-rescue">VM Console shows "grub rescue&gt;"</h4>
+<p>GRUB 2 was unable to find the grub folder or its contents are missing/corrupted. The grub folder contains the GRUB 2 menu, modules and stored environmental data. This should not happen very often. Simply reboot the VM from <a href="https://cloud.ibm.com">https://cloud.ibm.com</a>.</p>
+<h4 id="rhcos-ignition-stalls-with-version-mismatch">RHCOS Ignition stalls with "version mismatch"</h4>
+<p>The version of RHCOS you are booting up with on cluster nodes cannot handle what the OCP build/version is serving as config for cluster nodes. Make sure they match at least the major and minor versions (eg. 4.5) in your <code>var.tfvars</code> file.</p>
+<h4 id="error-about-auth-keytoken">Error about auth key/token</h4>
+<pre><code class="language-text">Error: Error occured while fetching the auth key for power iaas: &quot;Post https://iam.cloud.ibm.com/identity/token: dial tcp: lookup iam.cloud.ibm.com on 192.168.2.1:53: read udp 192.168.2.25:49597-&gt;192.168.2.1:53: i/o timeout&quot;
+</code></pre>
+<p>You may occasionally get this error upon <code>terraform apply</code> runs. One thing you can try is to regenerate IBM Cloud API key and rerun with it. See: <a href="https://cloud.ibm.com/docs/account?topic=account-userapikey">https://cloud.ibm.com/docs/account?topic=account-userapikey</a></p>
+<h4 id="image-registry-not-coming-up">Image Registry not coming up</h4>
+<p>Toward the end of deploying a cluster or even after your <code>terraform apply</code> appears to complete happily, you might find your <code>image-registry</code> operator not AVAILABLE. Digging in, if you find the <code>registry-pvc</code> PersistentVolumeClaim stuck in Pending state, while <code>nfs-client-provisioner</code> pod appears to be Running fine, it may be the case where the backing NFS share is read-only, and thus PVCs can't be fulfilled. Check the directory ownership and permission of <code>/export</code> on your bastion node. It has to be owned by "nobody" and world writeable. Use below commands as necessary;</p>
+<pre><code class="language-text"># chown nobody:nobody /export
+# chmod 777 /export
+# exportfs -r
+</code></pre>
+<p>Note: allow a few minutes to sort all things out after these commands.</p>
+<hr />
+<h2 id="problems-on-a-running-cluster">Problems on a Running Cluster</h2>
+<h4 id="need-to-add-more-cpumemory-to-node">Need to add more CPU/Memory to Node</h4>
+<p>Go to <a href="https://cloud.ibm.com">https://cloud.ibm.com</a>, then to your PowerVS service instance, find your VM that backs the cluster Node (eg. myocp-worker-0), click to open up the details page, then "Edit details," update the CPU/Memory with new values, and Save. You should get "Edit successful" message, and your OCP cluster should recognize the change and start showing in Compute section of Web Console. If something fails along the way, try "OS Shutdown" action, edit CPU/Memory as necessary while in "Shutoff" state, and restart the VM.</p>
+<hr />
+<h2 id="securing-a-cluster">Securing a Cluster</h2>
+<h4 id="tba">TBA</h4>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../../../ocp4-upi-kvm/" class="btn btn-neutral" title="Deploying OpenShift on KVM"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../../../ocp4-upi-kvm/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>

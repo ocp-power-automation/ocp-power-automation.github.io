@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>Command setup - Deploying OpenShift on IBM Power Systems</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Command setup";
+    var mkdocs_page_input_path = "openshift-install-power/docs/setup.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Deploying OpenShift on IBM Power Systems</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervs/">Deploying OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../">Deploying OpenShift on IBM Cloud Power Virtual Servers via Bash Script</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-powervm/">Deploying OpenShift on PowerVM managed via PowerVC</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp4-upi-kvm/">Deploying OpenShift on KVM</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../../ocp-powervm-faq/docs/powervs-faq/">FAQ for OpenShift on IBM Cloud Power Virtual Servers</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Deploying OpenShift on IBM Power Systems</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Command setup</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="command-setup">Command setup</h1>
+<h2 id="what-it-does">What it does</h2>
+<p>This command when executed will setup the automation requirements to be run in the current directory. It will setup required system packages, IBM Cloud CLI and power-iaas plugin, Terraform and the automation code (artifacts).</p>
+<h3 id="install-system-packages">Install system packages</h3>
+<p>Installs all the required packages/binaries in current directory. The script will install following packages using the package manager installed on your system. 
+1. curl
+1. unzip
+1. tar</p>
+<p>Note: This is not applicable for Windows OS, make sure the commands are available before running the script.</p>
+<h3 id="setup-ibm-cloud-cli">Setup IBM Cloud CLI</h3>
+<p>Downloads the latest IBM Cloud CLI binary. The downloaded binary is placed in the current directory.</p>
+<p>If the latest CLI is already present in the system PATH then the script will create a symbolic link in the current directory and use it. The script does not download the binary in this case.</p>
+<h3 id="setup-ibm-cloud-plug-in-for-power-power-iaas">Setup IBM Cloud plug-in for Power (power-iaas)</h3>
+<p>Installs the latest IBM Cloud power-iaas plug-in if the latest is not installed already.</p>
+<h3 id="setup-terraform">Setup Terraform</h3>
+<p>Downloads the latest Terraform binary from https://releases.hashicorp.com/terraform/. The downloaded binary is placed in the current directory.</p>
+<p>If the latest Terraform is already present in the system PATH then the script will create a symbolic link in the current directory and use it. The script does not download the binary in this case.</p>
+<h3 id="download-the-artifacts">Download the artifacts</h3>
+<p>Downloads the Terraform artifacts which is used to create the OpenShift 4 cluster on PowerVS at IBM Cloud.</p>
+<p>The script uses environment variable ARTIFACTS_VERSION to download the <a href="https://github.com/ocp-power-automation/ocp4-upi-powervs">OCP on PowerVS</a> code. ARTIFACTS_VERSION can set to the branch or tag name eg: release-4.5, release-4.6, release-4.7 <em>(default)</em>, v4.5.1, etc.</p>
+<p>Another environment variable you can set is RELEASE_VER to the OpenShift version you want to install. eg: 4.5, 4.6, 4.7 <em>(default)</em>, etc.</p>
+<h2 id="usage">Usage</h2>
+<pre><code># openshift-install-powervs setup
+[setup] Installing dependency packages and tools
+[setup_tools] Verifying the latest packages and tools
+[setup_artifacts] Downloading code artifacts release-4.7 in ./automation
+Attempt: 1/5
+[setup] SUCCESS: setup command completed!
+
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js" defer></script>
+      <script src="../../../search/main.js" defer></script>
+
+</body>
+</html>
